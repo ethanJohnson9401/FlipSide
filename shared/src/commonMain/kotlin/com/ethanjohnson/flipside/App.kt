@@ -9,11 +9,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import com.ethanjohnson.flipside.ui.theme.FlipSideTheme
 
 @Composable
 @Preview
 fun App() {
-    MaterialTheme {
+    FlipSideTheme {
         Surface(
             modifier = Modifier.fillMaxSize(),
             color = MaterialTheme.colorScheme.background
@@ -24,7 +25,8 @@ fun App() {
             ) {
                 Text(
                     text = "FlipSide",
-                    style = MaterialTheme.typography.headlineLarge
+                    style = MaterialTheme.typography.displayMedium,
+                    color = MaterialTheme.colorScheme.onBackground
                 )
             }
         }
