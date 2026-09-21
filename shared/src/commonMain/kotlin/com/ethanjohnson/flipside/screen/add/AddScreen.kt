@@ -13,12 +13,16 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -28,7 +32,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.ethanjohnson.flipside.model.MediaFormat
@@ -38,6 +41,19 @@ private enum class AddDestination(
 ) {
     COLLECTION("Collection"),
     WISHLIST("Wishlist")
+}
+
+private enum class MediaCondition(
+    val label: String
+) {
+    MINT("Mint"),
+    NEAR_MINT("Near Mint"),
+    VERY_GOOD_PLUS("Very Good+"),
+    VERY_GOOD("Very Good"),
+    GOOD_PLUS("Good+"),
+    GOOD("Good"),
+    FAIR("Fair"),
+    POOR("Poor")
 }
 
 @Composable
@@ -63,7 +79,11 @@ fun AddScreen() {
     }
 
     var condition by remember {
-        mutableStateOf("")
+        mutableStateOf<MediaCondition?>(null)
+    }
+
+    var conditionMenuExpanded by remember {
+        mutableStateOf(false)
     }
 
     var purchasePrice by remember {
@@ -137,13 +157,18 @@ fun AddScreen() {
                         edition = it
                     },
                     condition = condition,
+                    conditionMenuExpanded = conditionMenuExpanded,
+                    onConditionMenuExpandedChange = {
+                        conditionMenuExpanded = it
+                    },
                     onConditionChange = {
                         condition = it
                     },
                     purchasePrice = purchasePrice,
                     onPurchasePriceChange = {
                         purchasePrice = sanitizePrice(it)
-                    }
+                    },
+                    showPurchasePrice = destination == AddDestination.COLLECTION
                 )
 
                 NotesSection(
@@ -157,6 +182,10 @@ fun AddScreen() {
                     destination = destination,
                     onDestinationSelected = {
                         destination = it
+
+                        if (it == AddDestination.WISHLIST) {
+                            purchasePrice = ""
+                        }
                     }
                 )
 
@@ -164,8 +193,10 @@ fun AddScreen() {
                     canSave = canSave,
                     destination = destination,
                     onSave = {
-                        // Later this will create a real MediaItem
-                        // and save it to local storage/database.
+                        // Later:
+                        // create MediaItem
+                        // save to repository/database
+                        // navigate to Collection or Wishlist
                     }
                 )
 
@@ -281,10 +312,13 @@ private fun BasicInfoSection(
 private fun CopyDetailsSection(
     edition: String,
     onEditionChange: (String) -> Unit,
-    condition: String,
-    onConditionChange: (String) -> Unit,
+    condition: MediaCondition?,
+    conditionMenuExpanded: Boolean,
+    onConditionMenuExpandedChange: (Boolean) -> Unit,
+    onConditionChange: (MediaCondition) -> Unit,
     purchasePrice: String,
-    onPurchasePriceChange: (String) -> Unit
+    onPurchasePriceChange: (String) -> Unit,
+    showPurchasePrice: Boolean
 ) {
     FormSection(
         title = "Copy Details"
@@ -305,34 +339,54 @@ private fun CopyDetailsSection(
                 singleLine = true
             )
 
-            OutlinedTextField(
-                value = condition,
-                onValueChange = onConditionChange,
-                modifier = Modifier.fillMaxWidth(),
-                label = {
-                    Text("Condition")
-                },
-                placeholder = {
-                    Text("Example: Very Good+")
-                },
-                singleLine = true
-            )
+            Box {
+                OutlinedButton(
+                    onClick = {
+                        onConditionMenuExpandedChange(true)
+                    }
+                ) {
+                    Text(
+                        text = condition?.label ?: "Select condition"
+                    )
+                }
 
-            OutlinedTextField(
-                value = purchasePrice,
-                onValueChange = onPurchasePriceChange,
-                modifier = Modifier.widthIn(max = 260.dp),
-                label = {
-                    Text("Purchase price")
-                },
-                prefix = {
-                    Text("$")
-                },
-                keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Decimal
-                ),
-                singleLine = true
-            )
+                DropdownMenu(
+                    expanded = conditionMenuExpanded,
+                    onDismissRequest = {
+                        onConditionMenuExpandedChange(false)
+                    }
+                ) {
+                    MediaCondition.entries.forEach { option ->
+                        DropdownMenuItem(
+                            text = {
+                                Text(option.label)
+                            },
+                            onClick = {
+                                onConditionChange(option)
+                                onConditionMenuExpandedChange(false)
+                            }
+                        )
+                    }
+                }
+            }
+
+            if (showPurchasePrice) {
+                OutlinedTextField(
+                    value = purchasePrice,
+                    onValueChange = onPurchasePriceChange,
+                    modifier = Modifier.widthIn(max = 260.dp),
+                    label = {
+                        Text("Purchase price")
+                    },
+                    prefix = {
+                        Text("$")
+                    },
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Decimal
+                    ),
+                    singleLine = true
+                )
+            }
         }
     }
 }
