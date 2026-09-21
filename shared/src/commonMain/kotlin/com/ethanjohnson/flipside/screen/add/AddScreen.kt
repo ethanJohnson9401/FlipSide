@@ -1,22 +1,494 @@
 package com.ethanjohnson.flipside.screen.add
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.unit.dp
+import com.ethanjohnson.flipside.model.MediaFormat
+
+private enum class AddDestination(
+    val label: String
+) {
+    COLLECTION("Collection"),
+    WISHLIST("Wishlist")
+}
 
 @Composable
 fun AddScreen() {
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
+    var selectedFormat by remember {
+        mutableStateOf(MediaFormat.VINYL)
+    }
+
+    var title by remember {
+        mutableStateOf("")
+    }
+
+    var subtitle by remember {
+        mutableStateOf("")
+    }
+
+    var year by remember {
+        mutableStateOf("")
+    }
+
+    var edition by remember {
+        mutableStateOf("")
+    }
+
+    var condition by remember {
+        mutableStateOf("")
+    }
+
+    var purchasePrice by remember {
+        mutableStateOf("")
+    }
+
+    var notes by remember {
+        mutableStateOf("")
+    }
+
+    var destination by remember {
+        mutableStateOf(AddDestination.COLLECTION)
+    }
+
+    val canSave = title.isNotBlank()
+
+    BoxWithConstraints(
+        modifier = Modifier.fillMaxSize()
+    ) {
+        val isWideLayout = maxWidth >= 900.dp
+
+        val horizontalPadding = if (isWideLayout) {
+            32.dp
+        } else {
+            16.dp
+        }
+
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.TopCenter
+        ) {
+            Column(
+                modifier = Modifier
+                    .widthIn(max = 900.dp)
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = horizontalPadding),
+                verticalArrangement = Arrangement.spacedBy(24.dp)
+            ) {
+                Spacer(
+                    modifier = Modifier.height(20.dp)
+                )
+
+                AddHeader()
+
+                FormatSection(
+                    selectedFormat = selectedFormat,
+                    onFormatSelected = {
+                        selectedFormat = it
+                    }
+                )
+
+                BasicInfoSection(
+                    title = title,
+                    onTitleChange = {
+                        title = it
+                    },
+                    subtitle = subtitle,
+                    onSubtitleChange = {
+                        subtitle = it
+                    },
+                    year = year,
+                    onYearChange = {
+                        year = it.filter(Char::isDigit).take(4)
+                    }
+                )
+
+                CopyDetailsSection(
+                    edition = edition,
+                    onEditionChange = {
+                        edition = it
+                    },
+                    condition = condition,
+                    onConditionChange = {
+                        condition = it
+                    },
+                    purchasePrice = purchasePrice,
+                    onPurchasePriceChange = {
+                        purchasePrice = sanitizePrice(it)
+                    }
+                )
+
+                NotesSection(
+                    notes = notes,
+                    onNotesChange = {
+                        notes = it
+                    }
+                )
+
+                DestinationSection(
+                    destination = destination,
+                    onDestinationSelected = {
+                        destination = it
+                    }
+                )
+
+                ActionSection(
+                    canSave = canSave,
+                    destination = destination,
+                    onSave = {
+                        // Later this will create a real MediaItem
+                        // and save it to local storage/database.
+                    }
+                )
+
+                Spacer(
+                    modifier = Modifier.height(40.dp)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun AddHeader() {
+    Column(
+        verticalArrangement = Arrangement.spacedBy(6.dp)
     ) {
         Text(
             text = "Add Media",
-            style = MaterialTheme.typography.headlineLarge
+            style = MaterialTheme.typography.displaySmall,
+            color = MaterialTheme.colorScheme.onBackground
+        )
+
+        Text(
+            text = "Add a physical copy to your collection or wishlist.",
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
+}
+
+@Composable
+private fun FormatSection(
+    selectedFormat: MediaFormat,
+    onFormatSelected: (MediaFormat) -> Unit
+) {
+    FormSection(
+        title = "Format"
+    ) {
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            MediaFormat.entries.forEach { format ->
+                FilterChip(
+                    selected = selectedFormat == format,
+                    onClick = {
+                        onFormatSelected(format)
+                    },
+                    label = {
+                        Text(format.displayName)
+                    }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun BasicInfoSection(
+    title: String,
+    onTitleChange: (String) -> Unit,
+    subtitle: String,
+    onSubtitleChange: (String) -> Unit,
+    year: String,
+    onYearChange: (String) -> Unit
+) {
+    FormSection(
+        title = "Media Information"
+    ) {
+        Column(
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            OutlinedTextField(
+                value = title,
+                onValueChange = onTitleChange,
+                modifier = Modifier.fillMaxWidth(),
+                label = {
+                    Text("Title")
+                },
+                supportingText = {
+                    Text("Required")
+                },
+                singleLine = true
+            )
+
+            OutlinedTextField(
+                value = subtitle,
+                onValueChange = onSubtitleChange,
+                modifier = Modifier.fillMaxWidth(),
+                label = {
+                    Text("Artist, director, developer, or author")
+                },
+                singleLine = true
+            )
+
+            OutlinedTextField(
+                value = year,
+                onValueChange = onYearChange,
+                modifier = Modifier.widthIn(max = 220.dp),
+                label = {
+                    Text("Year")
+                },
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Number
+                ),
+                singleLine = true
+            )
+        }
+    }
+}
+
+@Composable
+private fun CopyDetailsSection(
+    edition: String,
+    onEditionChange: (String) -> Unit,
+    condition: String,
+    onConditionChange: (String) -> Unit,
+    purchasePrice: String,
+    onPurchasePriceChange: (String) -> Unit
+) {
+    FormSection(
+        title = "Copy Details"
+    ) {
+        Column(
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            OutlinedTextField(
+                value = edition,
+                onValueChange = onEditionChange,
+                modifier = Modifier.fillMaxWidth(),
+                label = {
+                    Text("Edition")
+                },
+                placeholder = {
+                    Text("Example: US pressing • Harvest Records")
+                },
+                singleLine = true
+            )
+
+            OutlinedTextField(
+                value = condition,
+                onValueChange = onConditionChange,
+                modifier = Modifier.fillMaxWidth(),
+                label = {
+                    Text("Condition")
+                },
+                placeholder = {
+                    Text("Example: Very Good+")
+                },
+                singleLine = true
+            )
+
+            OutlinedTextField(
+                value = purchasePrice,
+                onValueChange = onPurchasePriceChange,
+                modifier = Modifier.widthIn(max = 260.dp),
+                label = {
+                    Text("Purchase price")
+                },
+                prefix = {
+                    Text("$")
+                },
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Decimal
+                ),
+                singleLine = true
+            )
+        }
+    }
+}
+
+@Composable
+private fun NotesSection(
+    notes: String,
+    onNotesChange: (String) -> Unit
+) {
+    FormSection(
+        title = "Notes"
+    ) {
+        OutlinedTextField(
+            value = notes,
+            onValueChange = onNotesChange,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(140.dp),
+            label = {
+                Text("Notes about this copy")
+            }
+        )
+    }
+}
+
+@Composable
+private fun DestinationSection(
+    destination: AddDestination,
+    onDestinationSelected: (AddDestination) -> Unit
+) {
+    FormSection(
+        title = "Add To"
+    ) {
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            FilterChip(
+                selected = destination == AddDestination.COLLECTION,
+                onClick = {
+                    onDestinationSelected(AddDestination.COLLECTION)
+                },
+                label = {
+                    Text("Collection")
+                }
+            )
+
+            FilterChip(
+                selected = destination == AddDestination.WISHLIST,
+                onClick = {
+                    onDestinationSelected(AddDestination.WISHLIST)
+                },
+                label = {
+                    Text("Wishlist")
+                }
+            )
+        }
+    }
+}
+
+@Composable
+private fun ActionSection(
+    canSave: Boolean,
+    destination: AddDestination,
+    onSave: () -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = MaterialTheme.shapes.large,
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        )
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(18.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(3.dp)
+            ) {
+                Text(
+                    text = "Ready to save?",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+
+                Text(
+                    text = when (destination) {
+                        AddDestination.COLLECTION ->
+                            "This copy will be added to your collection."
+
+                        AddDestination.WISHLIST ->
+                            "This item will be added to your wishlist."
+                    },
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            Button(
+                onClick = onSave,
+                enabled = canSave
+            ) {
+                Text(
+                    text = when (destination) {
+                        AddDestination.COLLECTION -> "Add to Collection"
+                        AddDestination.WISHLIST -> "Add to Wishlist"
+                    }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun FormSection(
+    title: String,
+    content: @Composable () -> Unit
+) {
+    Column(
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.headlineSmall,
+            color = MaterialTheme.colorScheme.onBackground
+        )
+
+        content()
+    }
+}
+
+private fun sanitizePrice(
+    value: String
+): String {
+    val filtered = value.filter {
+        it.isDigit() || it == '.'
+    }
+
+    val firstDecimal = filtered.indexOf('.')
+
+    if (firstDecimal == -1) {
+        return filtered
+    }
+
+    val whole = filtered.substring(
+        startIndex = 0,
+        endIndex = firstDecimal
+    )
+
+    val decimal = filtered
+        .substring(firstDecimal + 1)
+        .filter(Char::isDigit)
+        .take(2)
+
+    return "$whole.$decimal"
 }
