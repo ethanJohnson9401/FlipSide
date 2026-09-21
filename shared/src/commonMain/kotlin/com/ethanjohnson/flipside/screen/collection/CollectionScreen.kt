@@ -64,7 +64,9 @@ private enum class CollectionViewMode {
 }
 
 @Composable
-fun CollectionScreen() {
+fun CollectionScreen(
+    onMediaClick: (MediaItem) -> Unit = {}
+) {
     val collectionItems = FakeMediaData.collectionItems
 
     var searchText by remember {
@@ -291,7 +293,10 @@ fun CollectionScreen() {
                                         title = item.title,
                                         subtitle = mediaSubtitle(item),
                                         format = item.format.displayName,
-                                        modifier = Modifier.fillMaxWidth()
+                                        modifier = Modifier.fillMaxWidth(),
+                                        onClick = {
+                                            onMediaClick(item)
+                                        }
                                     )
                                 }
                             }
@@ -311,7 +316,10 @@ fun CollectionScreen() {
                                     }
                                 ) { item ->
                                     CollectionListItem(
-                                        item = item
+                                        item = item,
+                                        onClick = {
+                                            onMediaClick(item)
+                                        }
                                     )
                                 }
 
@@ -410,12 +418,14 @@ private fun CollectionToolbar(
 
 @Composable
 private fun CollectionListItem(
-    item: MediaItem
+    item: MediaItem,
+    onClick: () -> Unit
 ) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .height(108.dp),
+        onClick = onClick,
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
         ),

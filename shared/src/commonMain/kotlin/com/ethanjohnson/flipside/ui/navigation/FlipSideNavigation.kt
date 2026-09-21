@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -14,8 +15,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.ethanjohnson.flipside.model.MediaItem
 import com.ethanjohnson.flipside.screen.add.AddScreen
 import com.ethanjohnson.flipside.screen.collection.CollectionScreen
+import com.ethanjohnson.flipside.screen.detail.MediaDetailScreen
 import com.ethanjohnson.flipside.screen.discover.DiscoverScreen
 import com.ethanjohnson.flipside.screen.home.HomeScreen
 import com.ethanjohnson.flipside.screen.wishlist.WishlistScreen
@@ -24,6 +27,10 @@ import com.ethanjohnson.flipside.screen.wishlist.WishlistScreen
 fun FlipSideNavigation() {
     var currentDestination by remember {
         mutableStateOf(FlipSideDestination.HOME)
+    }
+
+    var selectedMediaItem by remember {
+        mutableStateOf<MediaItem?>(null)
     }
 
     BoxWithConstraints(
@@ -39,6 +46,7 @@ fun FlipSideNavigation() {
                     currentDestination = currentDestination,
                     onDestinationSelected = { destination ->
                         currentDestination = destination
+                        selectedMediaItem = null
                     }
                 )
 
@@ -46,8 +54,15 @@ fun FlipSideNavigation() {
                     modifier = Modifier.weight(1f),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    FlipSideDestinationContent(
-                        destination = currentDestination
+                    FlipSideContent(
+                        currentDestination = currentDestination,
+                        selectedMediaItem = selectedMediaItem,
+                        onMediaClick = { item ->
+                            selectedMediaItem = item
+                        },
+                        onMediaDetailBack = {
+                            selectedMediaItem = null
+                        }
                     )
                 }
             }
@@ -58,15 +73,25 @@ fun FlipSideNavigation() {
                         currentDestination = currentDestination,
                         onDestinationSelected = { destination ->
                             currentDestination = destination
+                            selectedMediaItem = null
                         }
                     )
                 }
             ) { innerPadding ->
                 Box(
-                    modifier = Modifier.fillMaxSize()
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding)
                 ) {
-                    FlipSideDestinationContent(
-                        destination = currentDestination
+                    FlipSideContent(
+                        currentDestination = currentDestination,
+                        selectedMediaItem = selectedMediaItem,
+                        onMediaClick = { item ->
+                            selectedMediaItem = item
+                        },
+                        onMediaDetailBack = {
+                            selectedMediaItem = null
+                        }
                     )
                 }
             }
@@ -75,14 +100,44 @@ fun FlipSideNavigation() {
 }
 
 @Composable
-private fun FlipSideDestinationContent(
-    destination: FlipSideDestination
+private fun FlipSideContent(
+    currentDestination: FlipSideDestination,
+    selectedMediaItem: MediaItem?,
+    onMediaClick: (MediaItem) -> Unit,
+    onMediaDetailBack: () -> Unit
 ) {
-    when (destination) {
-        FlipSideDestination.HOME -> HomeScreen()
-        FlipSideDestination.COLLECTION -> CollectionScreen()
-        FlipSideDestination.ADD -> AddScreen()
-        FlipSideDestination.WISHLIST -> WishlistScreen()
-        FlipSideDestination.DISCOVER -> DiscoverScreen()
+    if (selectedMediaItem != null) {
+        MediaDetailScreen(
+            item = selectedMediaItem,
+            onBack = onMediaDetailBack
+        )
+
+        return
+    }
+
+    when (currentDestination) {
+        FlipSideDestination.HOME -> {
+            HomeScreen(
+                onMediaClick = onMediaClick
+            )
+        }
+
+        FlipSideDestination.COLLECTION -> {
+            CollectionScreen(
+                onMediaClick = onMediaClick
+            )
+        }
+
+        FlipSideDestination.ADD -> {
+            AddScreen()
+        }
+
+        FlipSideDestination.WISHLIST -> {
+            WishlistScreen()
+        }
+
+        FlipSideDestination.DISCOVER -> {
+            DiscoverScreen()
+        }
     }
 }

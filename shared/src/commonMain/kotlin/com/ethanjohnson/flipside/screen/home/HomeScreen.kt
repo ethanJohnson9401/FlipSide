@@ -29,7 +29,9 @@ import com.ethanjohnson.flipside.ui.components.SectionHeader
 import com.ethanjohnson.flipside.model.MediaFormat
 
 @Composable
-fun HomeScreen() {
+fun HomeScreen(
+    onMediaClick: (MediaItem) -> Unit = {}
+) {
     val recentItems = FakeMediaData.recentlyAdded
     val recommendationItems = FakeMediaData.recommendations
 
@@ -75,7 +77,8 @@ fun HomeScreen() {
                 MediaSection(
                     title = "Recently Added",
                     mediaItems = recentItems,
-                    isWideLayout = isWideLayout
+                    isWideLayout = isWideLayout,
+                    onMediaClick = onMediaClick
                 )
 
                 Spacer(
@@ -85,7 +88,8 @@ fun HomeScreen() {
                 MediaSection(
                     title = "Picked For You",
                     mediaItems = recommendationItems,
-                    isWideLayout = isWideLayout
+                    isWideLayout = isWideLayout,
+                    onMediaClick = onMediaClick
                 )
 
                 Spacer(
@@ -237,7 +241,8 @@ private fun CollectionStats(
 private fun MediaSection(
     title: String,
     mediaItems: List<MediaItem>,
-    isWideLayout: Boolean
+    isWideLayout: Boolean,
+    onMediaClick: (MediaItem) -> Unit
 ) {
     Column(
         verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -248,11 +253,13 @@ private fun MediaSection(
 
         if (isWideLayout) {
             DesktopMediaRow(
-                mediaItems = mediaItems
+                mediaItems = mediaItems,
+                onMediaClick = onMediaClick
             )
         } else {
             MobileMediaRow(
-                mediaItems = mediaItems
+                mediaItems = mediaItems,
+                onMediaClick = onMediaClick
             )
         }
     }
@@ -260,7 +267,8 @@ private fun MediaSection(
 
 @Composable
 private fun DesktopMediaRow(
-    mediaItems: List<MediaItem>
+    mediaItems: List<MediaItem>,
+    onMediaClick: (MediaItem) -> Unit
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -271,7 +279,10 @@ private fun DesktopMediaRow(
                 title = item.title,
                 subtitle = mediaSubtitle(item),
                 format = item.format.displayName,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
+                onClick = {
+                    onMediaClick(item)
+                }
             )
         }
     }
@@ -279,7 +290,8 @@ private fun DesktopMediaRow(
 
 @Composable
 private fun MobileMediaRow(
-    mediaItems: List<MediaItem>
+    mediaItems: List<MediaItem>,
+    onMediaClick: (MediaItem) -> Unit
 ) {
     LazyRow(
         horizontalArrangement = Arrangement.spacedBy(14.dp)
@@ -294,7 +306,10 @@ private fun MobileMediaRow(
                 title = item.title,
                 subtitle = mediaSubtitle(item),
                 format = item.format.displayName,
-                modifier = Modifier.width(170.dp)
+                modifier = Modifier.width(170.dp),
+                onClick = {
+                    onMediaClick(item)
+                }
             )
         }
     }
