@@ -4,6 +4,7 @@ import androidx.compose.runtime.mutableStateListOf
 import com.ethanjohnson.flipside.db.FlipSideDatabase
 import com.ethanjohnson.flipside.model.MediaFormat
 import com.ethanjohnson.flipside.model.MediaItem
+import kotlin.time.Clock
 
 class MediaRepository(
     private val database: FlipSideDatabase
@@ -38,7 +39,9 @@ class MediaRepository(
                 condition = condition.nullIfBlank(),
                 notes = notes.nullIfBlank(),
                 purchasePrice = purchasePrice,
-                dateAdded = "Just now",
+                dateAdded = Clock.System
+                    .now()
+                    .toEpochMilliseconds(),
                 isOwned = true,
                 isWishlisted = false
             )
@@ -67,7 +70,9 @@ class MediaRepository(
                 condition = condition.nullIfBlank(),
                 notes = notes.nullIfBlank(),
                 purchasePrice = null,
-                dateAdded = "Just now",
+                dateAdded = Clock.System
+                    .now()
+                    .toEpochMilliseconds(),
                 isOwned = false,
                 isWishlisted = true
             )
@@ -83,15 +88,15 @@ class MediaRepository(
             id = item.id,
             title = item.title,
             subtitle = item.subtitle,
-            format = item.format.name,
+            format = item.format.databaseValue,
             release_year = item.year?.toLong(),
             edition = item.edition,
             condition = item.condition,
             notes = item.notes,
             purchase_price = item.purchasePrice,
             date_added = item.dateAdded,
-            is_owned = if (item.isOwned) 1 else 0,
-            is_wishlisted = if (item.isWishlisted) 1 else 0,
+            is_owned = if (item.isOwned) 1L else 0L,
+            is_wishlisted = if (item.isWishlisted) 1L else 0L,
             added_order = nextOrder()
         )
     }
@@ -125,9 +130,11 @@ class MediaRepository(
             FakeMediaData.collectionItems +
                     FakeMediaData.wishlistItems
 
-        seedItems.reversed().forEach { item ->
-            insert(item)
-        }
+        seedItems
+            .reversed()
+            .forEach { item ->
+                insert(item)
+            }
     }
 
     private fun nextOrder(): Long {
@@ -137,7 +144,7 @@ class MediaRepository(
     }
 
     private fun generateId(): String {
-        return "user-media-${nextOrder()}"
+        return "user-media-${Clock.System.now().toEpochMilliseconds()}"
     }
 
     private fun mapMediaItem(
@@ -150,16 +157,22 @@ class MediaRepository(
         condition: String?,
         notes: String?,
         purchase_price: Double?,
-        date_added: String?,
+        date_added: Long?,
         is_owned: Long,
         is_wishlisted: Long,
         added_order: Long
     ): MediaItem {
+        val mediaFormat =
+            MediaFormat.fromDatabaseValue(format)
+                ?: error(
+                    "Unknown media format stored in database: $format"
+                )
+
         return MediaItem(
             id = id,
             title = title,
             subtitle = subtitle,
-            format = MediaFormat.valueOf(format),
+            format = mediaFormat,
             year = release_year?.toInt(),
             edition = edition,
             condition = condition,

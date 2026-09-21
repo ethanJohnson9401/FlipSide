@@ -16,7 +16,7 @@ object FakeMediaData {
             condition = "Very Good+",
             notes = "Original sleeve included. Minor wear on outer jacket.",
             purchasePrice = 24.99,
-            dateAdded = "September 20, 2026",
+            dateAdded = null,
             isOwned = true
         ),
         MediaItem(
@@ -29,7 +29,7 @@ object FakeMediaData {
             condition = "Very Good",
             notes = "Clean vinyl with light jacket wear.",
             purchasePrice = 19.50,
-            dateAdded = "September 17, 2026",
+            dateAdded = null,
             isOwned = true
         ),
         MediaItem(
@@ -42,7 +42,7 @@ object FakeMediaData {
             condition = "Very Good",
             notes = "Case has light shelf wear.",
             purchasePrice = 8.00,
-            dateAdded = "September 18, 2026",
+            dateAdded = null,
             isOwned = true
         ),
         MediaItem(
@@ -55,7 +55,7 @@ object FakeMediaData {
             condition = "Good",
             notes = "Tape plays well. Case has moderate wear.",
             purchasePrice = 6.50,
-            dateAdded = "September 15, 2026",
+            dateAdded = null,
             isOwned = true
         ),
         MediaItem(
@@ -68,7 +68,7 @@ object FakeMediaData {
             condition = "Very Good",
             notes = "Loose cartridge. Label is clean.",
             purchasePrice = 139.99,
-            dateAdded = "September 12, 2026",
+            dateAdded = null,
             isOwned = true
         ),
         MediaItem(
@@ -81,7 +81,7 @@ object FakeMediaData {
             condition = "Very Good+",
             notes = "Complete with case and manual.",
             purchasePrice = 29.99,
-            dateAdded = "September 10, 2026",
+            dateAdded = null,
             isOwned = true
         ),
         MediaItem(
@@ -94,7 +94,7 @@ object FakeMediaData {
             condition = "Near Mint",
             notes = "Disc and booklet are both very clean.",
             purchasePrice = 5.99,
-            dateAdded = "September 8, 2026",
+            dateAdded = null,
             isOwned = true
         ),
         MediaItem(
@@ -107,7 +107,7 @@ object FakeMediaData {
             condition = "Very Good",
             notes = "Includes original insert.",
             purchasePrice = 9.99,
-            dateAdded = "September 6, 2026",
+            dateAdded = null,
             isOwned = true
         ),
         MediaItem(
@@ -120,7 +120,7 @@ object FakeMediaData {
             condition = "Good",
             notes = "Tape shell has light cosmetic wear.",
             purchasePrice = 7.50,
-            dateAdded = "September 4, 2026",
+            dateAdded = null,
             isOwned = true
         ),
         MediaItem(
@@ -133,7 +133,7 @@ object FakeMediaData {
             condition = "Near Mint",
             notes = "Case, disc, and artwork are all clean.",
             purchasePrice = 12.99,
-            dateAdded = "September 2, 2026",
+            dateAdded = null,
             isOwned = true
         )
     )

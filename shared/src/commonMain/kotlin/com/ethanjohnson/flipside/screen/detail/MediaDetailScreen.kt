@@ -31,6 +31,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.ethanjohnson.flipside.model.MediaItem
 import com.ethanjohnson.flipside.ui.components.FormatBadge
+import kotlin.time.Clock
 
 @Composable
 fun MediaDetailScreen(
@@ -337,7 +338,7 @@ private fun CollectorSummary(
             item.dateAdded?.let { date ->
                 MetadataCard(
                     label = "Date Added",
-                    value = date,
+                    value = formatDateAdded(date),
                     modifier = Modifier.widthIn(
                         min = 220.dp,
                         max = 280.dp
@@ -432,4 +433,50 @@ private fun formatPrice(
     val remainder = cents % 100
 
     return "$dollars.${remainder.toString().padStart(2, '0')}"
+}
+
+private fun formatDateAdded(
+    timestamp: Long
+): String {
+    val now = Clock.System
+        .now()
+        .toEpochMilliseconds()
+
+    val difference = now - timestamp
+
+    val minute = 60_000L
+    val hour = 60 * minute
+    val day = 24 * hour
+
+    return when {
+        difference < minute -> {
+            "Just now"
+        }
+
+        difference < hour -> {
+            val minutes = difference / minute
+
+            "$minutes min ago"
+        }
+
+        difference < day -> {
+            val hours = difference / hour
+
+            if (hours == 1L) {
+                "1 hour ago"
+            } else {
+                "$hours hours ago"
+            }
+        }
+
+        difference < 2 * day -> {
+            "Yesterday"
+        }
+
+        else -> {
+            val days = difference / day
+
+            "$days days ago"
+        }
+    }
 }

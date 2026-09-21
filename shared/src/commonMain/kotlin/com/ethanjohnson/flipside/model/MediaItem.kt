@@ -12,7 +12,7 @@ data class MediaItem(
     val notes: String? = null,
 
     val purchasePrice: Double? = null,
-    val dateAdded: String? = null,
+    val dateAdded: Long? = null,
 
     val isOwned: Boolean = true,
     val isWishlisted: Boolean = false

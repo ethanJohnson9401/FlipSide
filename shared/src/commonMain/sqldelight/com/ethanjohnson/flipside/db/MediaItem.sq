@@ -8,7 +8,7 @@ CREATE TABLE media_item (
     condition TEXT,
     notes TEXT,
     purchase_price REAL,
-    date_added TEXT,
+    date_added INTEGER,
     is_owned INTEGER NOT NULL,
     is_wishlisted INTEGER NOT NULL,
     added_order INTEGER NOT NULL
