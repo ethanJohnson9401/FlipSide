@@ -57,31 +57,7 @@ class MusicBrainzSearchService(
             .map { release ->
                 release.toMediaSearchResult()
             }
-            .distinctBy { result ->
-                buildString {
-                    append(
-                        result.title.lowercase()
-                    )
-
-                    append("::")
-
-                    append(
-                        result.subtitle.lowercase()
-                    )
-
-                    append("::")
-
-                    append(
-                        result.year
-                    )
-
-                    append("::")
-
-                    append(
-                        result.format
-                    )
-                }
-            }
+            .distinctBy { it.externalId }
     }
 
     companion object {

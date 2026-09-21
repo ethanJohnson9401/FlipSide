@@ -4,6 +4,7 @@ import com.ethanjohnson.flipside.data.search.MediaSearchRepository
 import com.ethanjohnson.flipside.model.MediaItem
 import com.ethanjohnson.flipside.model.MediaSearchResult
 import kotlinx.coroutines.delay
+import com.ethanjohnson.flipside.model.MediaFormat
 
 class RecommendationCandidateService(
     private val searchRepository: MediaSearchRepository
@@ -109,7 +110,15 @@ class RecommendationCandidateService(
     private fun findTopCreators(
         collection: List<MediaItem>
     ): List<String> {
-        return collection
+
+        val musicItems =
+            collection.filter { item ->
+                item.format == MediaFormat.VINYL ||
+                        item.format == MediaFormat.CD ||
+                        item.format == MediaFormat.CASSETTE
+            }
+
+        return musicItems
             .map {
                 it.subtitle.trim()
             }
@@ -127,19 +136,12 @@ class RecommendationCandidateService(
             .take(
                 MAX_CREATORS
             )
-            .mapNotNull {
-                    entry ->
-
-                /*
-                 * Recover the user's original capitalization
-                 * rather than returning the normalized string.
-                 */
-                collection
+            .mapNotNull { entry ->
+                musicItems
                     .firstOrNull { item ->
                         normalize(
                             item.subtitle
-                        ) ==
-                                entry.key
+                        ) == entry.key
                     }
                     ?.subtitle
                     ?.trim()
