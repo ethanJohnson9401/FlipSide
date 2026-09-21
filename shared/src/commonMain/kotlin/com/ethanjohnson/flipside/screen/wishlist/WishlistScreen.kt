@@ -36,9 +36,9 @@ import com.ethanjohnson.flipside.ui.components.MediaCard
 
 @Composable
 fun WishlistScreen(
+    wishlistItems: List<MediaItem>,
     onMediaClick: (MediaItem) -> Unit = {}
 ) {
-    val wishlistItems = FakeMediaData.wishlistItems
 
     var searchText by remember {
         mutableStateOf(TextFieldValue(""))

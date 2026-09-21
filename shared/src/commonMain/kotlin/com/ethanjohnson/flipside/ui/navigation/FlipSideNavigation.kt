@@ -22,9 +22,15 @@ import com.ethanjohnson.flipside.screen.detail.MediaDetailScreen
 import com.ethanjohnson.flipside.screen.discover.DiscoverScreen
 import com.ethanjohnson.flipside.screen.home.HomeScreen
 import com.ethanjohnson.flipside.screen.wishlist.WishlistScreen
+import com.ethanjohnson.flipside.data.MediaRepository
 
 @Composable
 fun FlipSideNavigation() {
+
+    val mediaRepository = remember {
+        MediaRepository()
+    }
+
     var currentDestination by remember {
         mutableStateOf(FlipSideDestination.HOME)
     }
@@ -57,10 +63,15 @@ fun FlipSideNavigation() {
                     FlipSideContent(
                         currentDestination = currentDestination,
                         selectedMediaItem = selectedMediaItem,
+                        mediaRepository = mediaRepository,
                         onMediaClick = { item ->
                             selectedMediaItem = item
                         },
                         onMediaDetailBack = {
+                            selectedMediaItem = null
+                        },
+                        onDestinationChange = { destination ->
+                            currentDestination = destination
                             selectedMediaItem = null
                         }
                     )
@@ -86,10 +97,15 @@ fun FlipSideNavigation() {
                     FlipSideContent(
                         currentDestination = currentDestination,
                         selectedMediaItem = selectedMediaItem,
+                        mediaRepository = mediaRepository,
                         onMediaClick = { item ->
                             selectedMediaItem = item
                         },
                         onMediaDetailBack = {
+                            selectedMediaItem = null
+                        },
+                        onDestinationChange = { destination ->
+                            currentDestination = destination
                             selectedMediaItem = null
                         }
                     )
@@ -103,8 +119,10 @@ fun FlipSideNavigation() {
 private fun FlipSideContent(
     currentDestination: FlipSideDestination,
     selectedMediaItem: MediaItem?,
+    mediaRepository: MediaRepository,
     onMediaClick: (MediaItem) -> Unit,
-    onMediaDetailBack: () -> Unit
+    onMediaDetailBack: () -> Unit,
+    onDestinationChange: (FlipSideDestination) -> Unit
 ) {
     if (selectedMediaItem != null) {
         MediaDetailScreen(
@@ -118,22 +136,74 @@ private fun FlipSideContent(
     when (currentDestination) {
         FlipSideDestination.HOME -> {
             HomeScreen(
+                collectionItems = mediaRepository.collectionItems,
                 onMediaClick = onMediaClick
             )
         }
 
         FlipSideDestination.COLLECTION -> {
             CollectionScreen(
+                collectionItems = mediaRepository.collectionItems,
                 onMediaClick = onMediaClick
             )
         }
 
         FlipSideDestination.ADD -> {
-            AddScreen()
+            AddScreen(
+                onAddToCollection = {
+                        title,
+                        subtitle,
+                        format,
+                        year,
+                        edition,
+                        condition,
+                        purchasePrice,
+                        notes ->
+
+                    mediaRepository.addToCollection(
+                        title = title,
+                        subtitle = subtitle,
+                        format = format,
+                        year = year,
+                        edition = edition,
+                        condition = condition,
+                        purchasePrice = purchasePrice,
+                        notes = notes
+                    )
+
+                    onDestinationChange(
+                        FlipSideDestination.COLLECTION
+                    )
+                },
+                onAddToWishlist = {
+                        title,
+                        subtitle,
+                        format,
+                        year,
+                        edition,
+                        condition,
+                        notes ->
+
+                    mediaRepository.addToWishlist(
+                        title = title,
+                        subtitle = subtitle,
+                        format = format,
+                        year = year,
+                        edition = edition,
+                        condition = condition,
+                        notes = notes
+                    )
+
+                    onDestinationChange(
+                        FlipSideDestination.WISHLIST
+                    )
+                }
+            )
         }
 
         FlipSideDestination.WISHLIST -> {
             WishlistScreen(
+                wishlistItems = mediaRepository.wishlistItems,
                 onMediaClick = onMediaClick
             )
         }

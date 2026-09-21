@@ -57,7 +57,28 @@ private enum class MediaCondition(
 }
 
 @Composable
-fun AddScreen() {
+fun AddScreen(
+    onAddToCollection: (
+        title: String,
+        subtitle: String,
+        format: MediaFormat,
+        year: Int?,
+        edition: String?,
+        condition: String?,
+        purchasePrice: Double?,
+        notes: String?
+    ) -> Unit = { _, _, _, _, _, _, _, _ -> },
+
+    onAddToWishlist: (
+        title: String,
+        subtitle: String,
+        format: MediaFormat,
+        year: Int?,
+        edition: String?,
+        condition: String?,
+        notes: String?
+    ) -> Unit = { _, _, _, _, _, _, _ -> }
+) {
     var selectedFormat by remember {
         mutableStateOf(MediaFormat.VINYL)
     }
@@ -193,10 +214,40 @@ fun AddScreen() {
                     canSave = canSave,
                     destination = destination,
                     onSave = {
-                        // Later:
-                        // create MediaItem
-                        // save to repository/database
-                        // navigate to Collection or Wishlist
+                        when (destination) {
+                            AddDestination.COLLECTION -> {
+                                onAddToCollection(
+                                    title.trim(),
+                                    subtitle.trim(),
+                                    selectedFormat,
+                                    year.toIntOrNull(),
+                                    edition,
+                                    condition?.label,
+                                    purchasePrice.toDoubleOrNull(),
+                                    notes
+                                )
+                            }
+
+                            AddDestination.WISHLIST -> {
+                                onAddToWishlist(
+                                    title.trim(),
+                                    subtitle.trim(),
+                                    selectedFormat,
+                                    year.toIntOrNull(),
+                                    edition,
+                                    condition?.label,
+                                    notes
+                                )
+                            }
+                        }
+
+                        title = ""
+                        subtitle = ""
+                        year = ""
+                        edition = ""
+                        condition = null
+                        purchasePrice = ""
+                        notes = ""
                     }
                 )
 

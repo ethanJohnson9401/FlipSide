@@ -41,7 +41,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.ethanjohnson.flipside.data.FakeMediaData
 import com.ethanjohnson.flipside.model.MediaFormat
 import com.ethanjohnson.flipside.model.MediaItem
 import com.ethanjohnson.flipside.ui.components.FormatBadge
@@ -65,9 +64,9 @@ private enum class CollectionViewMode {
 
 @Composable
 fun CollectionScreen(
+    collectionItems: List<MediaItem>,
     onMediaClick: (MediaItem) -> Unit = {}
 ) {
-    val collectionItems = FakeMediaData.collectionItems
 
     var searchText by remember {
         mutableStateOf(TextFieldValue(""))

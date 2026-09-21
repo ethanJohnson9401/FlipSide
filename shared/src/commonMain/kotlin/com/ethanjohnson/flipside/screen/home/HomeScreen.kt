@@ -30,9 +30,10 @@ import com.ethanjohnson.flipside.model.MediaFormat
 
 @Composable
 fun HomeScreen(
+    collectionItems: List<MediaItem>,
     onMediaClick: (MediaItem) -> Unit = {}
 ) {
-    val recentItems = FakeMediaData.recentlyAdded
+    val recentItems = collectionItems.take(5)
     val recommendationItems = FakeMediaData.recommendations
 
     BoxWithConstraints(
@@ -67,6 +68,7 @@ fun HomeScreen(
                 )
 
                 CollectionStats(
+                    collectionItems = collectionItems,
                     isWideLayout = isWideLayout
                 )
 
@@ -137,9 +139,9 @@ private fun HomeHeader() {
 
 @Composable
 private fun CollectionStats(
+    collectionItems: List<MediaItem>,
     isWideLayout: Boolean
 ) {
-    val collectionItems = FakeMediaData.collectionItems
 
     val vinylCount = collectionItems.count {
         it.format == MediaFormat.VINYL
