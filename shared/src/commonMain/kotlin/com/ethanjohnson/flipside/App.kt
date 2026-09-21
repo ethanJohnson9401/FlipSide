@@ -1,32 +1,27 @@
 package com.ethanjohnson.flipside
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import com.ethanjohnson.flipside.data.MediaRepository
+import com.ethanjohnson.flipside.ui.navigation.FlipSideNavigation
+import com.ethanjohnson.flipside.ui.theme.FlipSideTheme
 
 @Composable
-@Preview
-fun App() {
-    MaterialTheme {
-        Surface(
-            modifier = Modifier.fillMaxSize(),
-            color = MaterialTheme.colorScheme.background
-        ) {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "FlipSide",
-                    style = MaterialTheme.typography.headlineLarge
-                )
-            }
+fun App(
+    mediaRepository: MediaRepository
+) {
+    FlipSideTheme {
+        BoxWithConstraints {
+            val useNavigationRail =
+                maxWidth >= 840.dp
+
+            FlipSideNavigation(
+                mediaRepository =
+                    mediaRepository,
+                useNavigationRail =
+                    useNavigationRail
+            )
         }
     }
 }

@@ -1,0 +1,87 @@
+CREATE TABLE media_item (
+    id TEXT NOT NULL PRIMARY KEY,
+    title TEXT NOT NULL,
+    subtitle TEXT NOT NULL,
+    format TEXT NOT NULL,
+    release_year INTEGER,
+    edition TEXT,
+    condition TEXT,
+    notes TEXT,
+    purchase_price REAL,
+    date_added INTEGER,
+    is_owned INTEGER NOT NULL,
+    is_wishlisted INTEGER NOT NULL,
+    added_order INTEGER NOT NULL
+);
+
+selectCollection:
+SELECT *
+FROM media_item
+WHERE is_owned = 1
+ORDER BY added_order DESC;
+
+selectWishlist:
+SELECT *
+FROM media_item
+WHERE is_wishlisted = 1
+ORDER BY added_order DESC;
+
+selectById:
+SELECT *
+FROM media_item
+WHERE id = ?;
+
+countItems:
+SELECT COUNT(*)
+FROM media_item;
+
+maxAddedOrder:
+SELECT COALESCE(MAX(added_order), 0)
+FROM media_item;
+
+insertItem:
+INSERT OR REPLACE INTO media_item(
+    id,
+    title,
+    subtitle,
+    format,
+    release_year,
+    edition,
+    condition,
+    notes,
+    purchase_price,
+    date_added,
+    is_owned,
+    is_wishlisted,
+    added_order
+)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+updateItem:
+UPDATE media_item
+SET
+    title = ?,
+    subtitle = ?,
+    format = ?,
+    release_year = ?,
+    edition = ?,
+    condition = ?,
+    notes = ?,
+    purchase_price = ?,
+    is_owned = ?,
+    is_wishlisted = ?
+WHERE id = ?;
+
+setOwned:
+UPDATE media_item
+SET is_owned = ?
+WHERE id = ?;
+
+setWishlisted:
+UPDATE media_item
+SET is_wishlisted = ?
+WHERE id = ?;
+
+deleteById:
+DELETE FROM media_item
+WHERE id = ?;
