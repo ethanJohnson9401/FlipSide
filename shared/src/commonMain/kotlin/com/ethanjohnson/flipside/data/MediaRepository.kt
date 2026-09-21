@@ -1,17 +1,28 @@
 package com.ethanjohnson.flipside.data
 
-import androidx.compose.runtime.mutableStateListOf
 import com.ethanjohnson.flipside.db.FlipSideDatabase
 import com.ethanjohnson.flipside.model.MediaFormat
 import com.ethanjohnson.flipside.model.MediaItem
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlin.time.Clock
 
 class MediaRepository(
     private val database: FlipSideDatabase
 ) {
 
-    val collectionItems = mutableStateListOf<MediaItem>()
-    val wishlistItems = mutableStateListOf<MediaItem>()
+    private val _collectionItems =
+        MutableStateFlow<List<MediaItem>>(emptyList())
+
+    val collectionItems: StateFlow<List<MediaItem>> =
+        _collectionItems.asStateFlow()
+
+    private val _wishlistItems =
+        MutableStateFlow<List<MediaItem>>(emptyList())
+
+    val wishlistItems: StateFlow<List<MediaItem>> =
+        _wishlistItems.asStateFlow()
 
     init {
         seedDatabaseIfEmpty()
@@ -102,19 +113,15 @@ class MediaRepository(
     }
 
     private fun refresh() {
-        val collection = database.mediaItemQueries
-            .selectCollection(::mapMediaItem)
-            .executeAsList()
+        _collectionItems.value =
+            database.mediaItemQueries
+                .selectCollection(::mapMediaItem)
+                .executeAsList()
 
-        val wishlist = database.mediaItemQueries
-            .selectWishlist(::mapMediaItem)
-            .executeAsList()
-
-        collectionItems.clear()
-        collectionItems.addAll(collection)
-
-        wishlistItems.clear()
-        wishlistItems.addAll(wishlist)
+        _wishlistItems.value =
+            database.mediaItemQueries
+                .selectWishlist(::mapMediaItem)
+                .executeAsList()
     }
 
     private fun seedDatabaseIfEmpty() {

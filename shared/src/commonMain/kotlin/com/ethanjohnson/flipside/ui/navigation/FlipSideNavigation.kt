@@ -10,6 +10,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -28,6 +29,12 @@ import com.ethanjohnson.flipside.data.MediaRepository
 fun FlipSideNavigation(
     mediaRepository: MediaRepository
 ) {
+
+    val collectionItems by
+    mediaRepository.collectionItems.collectAsState()
+
+    val wishlistItems by
+    mediaRepository.wishlistItems.collectAsState()
 
     var currentDestination by remember {
         mutableStateOf(FlipSideDestination.HOME)
@@ -62,6 +69,8 @@ fun FlipSideNavigation(
                         currentDestination = currentDestination,
                         selectedMediaItem = selectedMediaItem,
                         mediaRepository = mediaRepository,
+                        collectionItems = collectionItems,
+                        wishlistItems = wishlistItems,
                         onMediaClick = { item ->
                             selectedMediaItem = item
                         },
@@ -96,6 +105,8 @@ fun FlipSideNavigation(
                         currentDestination = currentDestination,
                         selectedMediaItem = selectedMediaItem,
                         mediaRepository = mediaRepository,
+                        collectionItems = collectionItems,
+                        wishlistItems = wishlistItems,
                         onMediaClick = { item ->
                             selectedMediaItem = item
                         },
@@ -118,6 +129,8 @@ private fun FlipSideContent(
     currentDestination: FlipSideDestination,
     selectedMediaItem: MediaItem?,
     mediaRepository: MediaRepository,
+    collectionItems: List<MediaItem>,
+    wishlistItems: List<MediaItem>,
     onMediaClick: (MediaItem) -> Unit,
     onMediaDetailBack: () -> Unit,
     onDestinationChange: (FlipSideDestination) -> Unit
@@ -134,14 +147,14 @@ private fun FlipSideContent(
     when (currentDestination) {
         FlipSideDestination.HOME -> {
             HomeScreen(
-                collectionItems = mediaRepository.collectionItems,
+                collectionItems = collectionItems,
                 onMediaClick = onMediaClick
             )
         }
 
         FlipSideDestination.COLLECTION -> {
             CollectionScreen(
-                collectionItems = mediaRepository.collectionItems,
+                collectionItems = collectionItems,
                 onMediaClick = onMediaClick
             )
         }
@@ -201,7 +214,7 @@ private fun FlipSideContent(
 
         FlipSideDestination.WISHLIST -> {
             WishlistScreen(
-                wishlistItems = mediaRepository.wishlistItems,
+                wishlistItems = wishlistItems,
                 onMediaClick = onMediaClick
             )
         }
