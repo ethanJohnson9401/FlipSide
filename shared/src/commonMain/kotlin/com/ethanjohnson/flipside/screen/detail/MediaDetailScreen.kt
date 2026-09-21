@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
@@ -21,6 +22,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -62,49 +64,82 @@ fun MediaDetailScreen(
                     modifier = Modifier.height(16.dp)
                 )
 
-                OutlinedButton(
-                    onClick = onBack
-                ) {
-                    Text("Back")
-                }
+                DetailBackButton(
+                    onBack = onBack
+                )
 
                 if (isWideLayout) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(32.dp),
-                        verticalAlignment = Alignment.Top
-                    ) {
-                        MediaArtwork(
-                            item = item,
-                            modifier = Modifier.width(320.dp)
-                        )
-
-                        MediaDetails(
-                            item = item,
-                            modifier = Modifier.weight(1f)
-                        )
-                    }
+                    DesktopDetailLayout(
+                        item = item
+                    )
                 } else {
-                    Column(
-                        verticalArrangement = Arrangement.spacedBy(20.dp)
-                    ) {
-                        MediaArtwork(
-                            item = item,
-                            modifier = Modifier.fillMaxWidth()
-                        )
-
-                        MediaDetails(
-                            item = item,
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                    }
+                    MobileDetailLayout(
+                        item = item
+                    )
                 }
 
                 Spacer(
-                    modifier = Modifier.height(32.dp)
+                    modifier = Modifier.height(40.dp)
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun DesktopDetailLayout(
+    item: MediaItem
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(32.dp),
+        verticalAlignment = Alignment.Top
+    ) {
+        MediaArtwork(
+            item = item,
+            modifier = Modifier.width(280.dp)
+        )
+
+        MediaDetails(
+            item = item,
+            modifier = Modifier
+                .weight(1f)
+                .widthIn(max = 680.dp)
+        )
+    }
+}
+
+@Composable
+private fun MobileDetailLayout(
+    item: MediaItem
+) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(22.dp)
+    ) {
+        MediaArtwork(
+            item = item,
+            modifier = Modifier
+                .fillMaxWidth()
+                .widthIn(max = 420.dp)
+                .align(Alignment.CenterHorizontally)
+        )
+
+        MediaDetails(
+            item = item,
+            modifier = Modifier.fillMaxWidth()
+        )
+    }
+}
+
+@Composable
+private fun DetailBackButton(
+    onBack: () -> Unit
+) {
+    OutlinedButton(
+        onClick = onBack
+    ) {
+        Text("Back")
     }
 }
 
@@ -145,109 +180,182 @@ private fun MediaDetails(
 ) {
     Column(
         modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(20.dp)
+        verticalArrangement = Arrangement.spacedBy(22.dp)
     ) {
-        Column(
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Text(
-                text = item.title,
-                style = MaterialTheme.typography.displaySmall,
-                color = MaterialTheme.colorScheme.onBackground,
-                maxLines = 3,
-                overflow = TextOverflow.Ellipsis
-            )
+        MediaIdentity(
+            item = item
+        )
 
-            Text(
-                text = buildString {
-                    append(item.subtitle)
+        MediaActions(
+            item = item
+        )
 
-                    item.year?.let { year ->
-                        append(" • ")
-                        append(year)
-                    }
-                },
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+        CollectorSummary(
+            item = item
+        )
 
-            FormatBadge(
-                text = item.format.displayName
-            )
-        }
-
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Button(
-                onClick = {}
-            ) {
-                Text(
-                    if (item.isOwned) {
-                        "Owned"
-                    } else {
-                        "Add to Collection"
-                    }
-                )
-            }
-
-            OutlinedButton(
-                onClick = {}
-            ) {
-                Text(
-                    if (item.isWishlisted) {
-                        "Wishlisted"
-                    } else {
-                        "Add to Wishlist"
-                    }
-                )
-            }
-        }
-
-        item.edition?.let {
-            DetailSection(
-                title = "Edition",
-                value = it
-            )
-        }
-
-        item.condition?.let {
-            DetailSection(
-                title = "Condition",
-                value = it
-            )
-        }
-
-        item.purchasePrice?.let {
-            DetailSection(
-                title = "Purchase Price",
-                value = "$${formatPrice(it)}"
-            )
-        }
-
-        item.dateAdded?.let {
-            DetailSection(
-                title = "Date Added",
-                value = it
-            )
-        }
-
-        item.notes?.let {
-            DetailSection(
-                title = "Notes",
-                value = it
+        item.notes?.let { notes ->
+            NotesSection(
+                notes = notes
             )
         }
     }
 }
 
 @Composable
-private fun DetailSection(
-    title: String,
-    value: String
+private fun MediaIdentity(
+    item: MediaItem
+) {
+    Column(
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Text(
+            text = item.title,
+            style = MaterialTheme.typography.displaySmall,
+            color = MaterialTheme.colorScheme.onBackground,
+            maxLines = 3,
+            overflow = TextOverflow.Ellipsis
+        )
+
+        Text(
+            text = mediaSubtitle(item),
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            FormatBadge(
+                text = item.format.displayName
+            )
+
+            Surface(
+                shape = MaterialTheme.shapes.small,
+                color = MaterialTheme.colorScheme.secondaryContainer
+            ) {
+                Text(
+                    text = "Physical Copy",
+                    modifier = Modifier.padding(
+                        horizontal = 10.dp,
+                        vertical = 5.dp
+                    ),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun MediaActions(
+    item: MediaItem
+) {
+    FlowRow(
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        Button(
+            onClick = {}
+        ) {
+            Text(
+                if (item.isOwned) {
+                    "Owned"
+                } else {
+                    "Add to Collection"
+                }
+            )
+        }
+
+        OutlinedButton(
+            onClick = {}
+        ) {
+            Text(
+                if (item.isWishlisted) {
+                    "Wishlisted"
+                } else {
+                    "Add to Wishlist"
+                }
+            )
+        }
+    }
+}
+
+@Composable
+private fun CollectorSummary(
+    item: MediaItem
+) {
+    Column(
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Text(
+            text = "Copy Details",
+            style = MaterialTheme.typography.headlineSmall,
+            color = MaterialTheme.colorScheme.onBackground
+        )
+
+        FlowRow(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            item.edition?.let { edition ->
+                MetadataCard(
+                    label = "Edition",
+                    value = edition,
+                    modifier = Modifier.widthIn(
+                        min = 220.dp,
+                        max = 320.dp
+                    )
+                )
+            }
+
+            item.condition?.let { condition ->
+                MetadataCard(
+                    label = "Condition",
+                    value = condition,
+                    modifier = Modifier.widthIn(
+                        min = 180.dp,
+                        max = 240.dp
+                    )
+                )
+            }
+
+            item.purchasePrice?.let { price ->
+                MetadataCard(
+                    label = "Purchase Price",
+                    value = "$${formatPrice(price)}",
+                    modifier = Modifier.widthIn(
+                        min = 180.dp,
+                        max = 220.dp
+                    )
+                )
+            }
+
+            item.dateAdded?.let { date ->
+                MetadataCard(
+                    label = "Date Added",
+                    value = date,
+                    modifier = Modifier.widthIn(
+                        min = 220.dp,
+                        max = 280.dp
+                    )
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun MetadataCard(
+    label: String,
+    value: String,
+    modifier: Modifier = Modifier
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier,
         shape = MaterialTheme.shapes.large,
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
@@ -255,11 +363,11 @@ private fun DetailSection(
     ) {
         Column(
             modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(6.dp)
+            verticalArrangement = Arrangement.spacedBy(5.dp)
         ) {
             Text(
-                text = title,
-                style = MaterialTheme.typography.titleMedium,
+                text = label,
+                style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.onSurface
             )
 
@@ -268,6 +376,49 @@ private fun DetailSection(
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
+        }
+    }
+}
+
+@Composable
+private fun NotesSection(
+    notes: String
+) {
+    Column(
+        verticalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        Text(
+            text = "Notes",
+            style = MaterialTheme.typography.headlineSmall,
+            color = MaterialTheme.colorScheme.onBackground
+        )
+
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = MaterialTheme.shapes.large,
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surface
+            )
+        ) {
+            Text(
+                text = notes,
+                modifier = Modifier.padding(18.dp),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+private fun mediaSubtitle(
+    item: MediaItem
+): String {
+    return buildString {
+        append(item.subtitle)
+
+        item.year?.let { year ->
+            append(" • ")
+            append(year)
         }
     }
 }
