@@ -153,4 +153,91 @@ object FakeMediaData {
         collectionItems.first { it.id == "rumours" },
         collectionItems.first { it.id == "metroid-prime" }
     )
+
+    val wishlistItems = listOf(
+        MediaItem(
+            id = "akira-bluray",
+            title = "Akira",
+            subtitle = "Katsuhiro Otomo",
+            format = MediaFormat.BLURAY,
+            year = 1988,
+            edition = "25th Anniversary Blu-ray",
+            condition = null,
+            notes = "Looking for a clean complete copy.",
+            purchasePrice = null,
+            dateAdded = null,
+            isOwned = false,
+            isWishlisted = true
+        ),
+        MediaItem(
+            id = "silent-hill-2",
+            title = "Silent Hill 2",
+            subtitle = "Konami",
+            format = MediaFormat.GAME,
+            year = 2001,
+            edition = "PlayStation 2 • North American release",
+            condition = null,
+            notes = "Prefer complete with manual.",
+            purchasePrice = null,
+            dateAdded = null,
+            isOwned = false,
+            isWishlisted = true
+        ),
+        MediaItem(
+            id = "in-rainbows",
+            title = "In Rainbows",
+            subtitle = "Radiohead",
+            format = MediaFormat.VINYL,
+            year = 2007,
+            edition = "Vinyl LP",
+            condition = null,
+            notes = "Looking for a clean pressing.",
+            purchasePrice = null,
+            dateAdded = null,
+            isOwned = false,
+            isWishlisted = true
+        ),
+        MediaItem(
+            id = "the-shining-vhs",
+            title = "The Shining",
+            subtitle = "Stanley Kubrick",
+            format = MediaFormat.VHS,
+            year = 1980,
+            edition = "Warner Home Video VHS",
+            condition = null,
+            notes = "Prefer original case.",
+            purchasePrice = null,
+            dateAdded = null,
+            isOwned = false,
+            isWishlisted = true
+        ),
+        MediaItem(
+            id = "resident-evil-gamecube",
+            title = "Resident Evil",
+            subtitle = "Capcom",
+            format = MediaFormat.GAME,
+            year = 2002,
+            edition = "Nintendo GameCube",
+            condition = null,
+            notes = "Black label preferred.",
+            purchasePrice = null,
+            dateAdded = null,
+            isOwned = false,
+            isWishlisted = true
+        ),
+        MediaItem(
+            id = "animals",
+            title = "Animals",
+            subtitle = "Pink Floyd",
+            format = MediaFormat.VINYL,
+            year = 1977,
+            edition = "Vinyl LP",
+            condition = null,
+            notes = "Original or early pressing preferred.",
+            purchasePrice = null,
+            dateAdded = null,
+            isOwned = false,
+            isWishlisted = true
+        )
+    )
 }

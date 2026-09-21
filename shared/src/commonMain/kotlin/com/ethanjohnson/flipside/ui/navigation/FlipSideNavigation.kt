@@ -133,7 +133,9 @@ private fun FlipSideContent(
         }
 
         FlipSideDestination.WISHLIST -> {
-            WishlistScreen()
+            WishlistScreen(
+                onMediaClick = onMediaClick
+            )
         }
 
         FlipSideDestination.DISCOVER -> {
