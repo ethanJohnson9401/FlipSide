@@ -92,6 +92,77 @@ class MediaRepository(
         refresh()
     }
 
+    fun deleteMediaItem(
+        id: String
+    ) {
+        database.mediaItemQueries.deleteById(id)
+        refresh()
+    }
+
+    fun setOwned(
+        id: String,
+        owned: Boolean
+    ) {
+        database.mediaItemQueries.setOwned(
+            is_owned = if (owned) 1L else 0L,
+            id = id
+        )
+
+        refresh()
+    }
+
+    fun setWishlisted(
+        id: String,
+        wishlisted: Boolean
+    ) {
+        database.mediaItemQueries.setWishlisted(
+            is_wishlisted = if (wishlisted) 1L else 0L,
+            id = id
+        )
+
+        refresh()
+    }
+
+    fun moveWishlistItemToCollection(
+        item: MediaItem
+    ) {
+        database.mediaItemQueries.updateItem(
+            title = item.title,
+            subtitle = item.subtitle,
+            format = item.format.databaseValue,
+            release_year = item.year?.toLong(),
+            edition = item.edition,
+            condition = item.condition,
+            notes = item.notes,
+            purchase_price = item.purchasePrice,
+            is_owned = 1L,
+            is_wishlisted = 0L,
+            id = item.id
+        )
+
+        refresh()
+    }
+
+    fun updateMediaItem(
+        item: MediaItem
+    ) {
+        database.mediaItemQueries.updateItem(
+            title = item.title.trim(),
+            subtitle = item.subtitle.trim(),
+            format = item.format.databaseValue,
+            release_year = item.year?.toLong(),
+            edition = item.edition.nullIfBlank(),
+            condition = item.condition.nullIfBlank(),
+            notes = item.notes.nullIfBlank(),
+            purchase_price = item.purchasePrice,
+            is_owned = if (item.isOwned) 1L else 0L,
+            is_wishlisted = if (item.isWishlisted) 1L else 0L,
+            id = item.id
+        )
+
+        refresh()
+    }
+
     private fun insert(
         item: MediaItem
     ) {

@@ -26,6 +26,11 @@ FROM media_item
 WHERE is_wishlisted = 1
 ORDER BY added_order DESC;
 
+selectById:
+SELECT *
+FROM media_item
+WHERE id = ?;
+
 countItems:
 SELECT COUNT(*)
 FROM media_item;
@@ -51,3 +56,32 @@ INSERT OR REPLACE INTO media_item(
     added_order
 )
 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+updateItem:
+UPDATE media_item
+SET
+    title = ?,
+    subtitle = ?,
+    format = ?,
+    release_year = ?,
+    edition = ?,
+    condition = ?,
+    notes = ?,
+    purchase_price = ?,
+    is_owned = ?,
+    is_wishlisted = ?
+WHERE id = ?;
+
+setOwned:
+UPDATE media_item
+SET is_owned = ?
+WHERE id = ?;
+
+setWishlisted:
+UPDATE media_item
+SET is_wishlisted = ?
+WHERE id = ?;
+
+deleteById:
+DELETE FROM media_item
+WHERE id = ?;

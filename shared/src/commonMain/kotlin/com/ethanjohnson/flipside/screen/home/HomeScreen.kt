@@ -15,6 +15,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -55,6 +57,9 @@ fun HomeScreen(
                 modifier = Modifier
                     .widthIn(max = 1200.dp)
                     .fillMaxSize()
+                    .verticalScroll(
+                        rememberScrollState()
+                    )
                     .padding(horizontal = horizontalPadding)
             ) {
                 Spacer(
