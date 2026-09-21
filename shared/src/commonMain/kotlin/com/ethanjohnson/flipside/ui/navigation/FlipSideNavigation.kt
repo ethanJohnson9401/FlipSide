@@ -10,16 +10,25 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.ethanjohnson.flipside.data.MediaRepository
+import com.ethanjohnson.flipside.data.recommendation.LocalMediaRecommendationService
+import com.ethanjohnson.flipside.data.recommendation.RecommendationCandidateService
+import com.ethanjohnson.flipside.data.search.CachedMediaSearchRepository
+import com.ethanjohnson.flipside.data.search.MediaSearchRepository
+import com.ethanjohnson.flipside.data.search.MusicBrainzSearchService
 import com.ethanjohnson.flipside.model.MediaItem
+import com.ethanjohnson.flipside.model.MediaSearchResult
 import com.ethanjohnson.flipside.screen.add.AddScreen
 import com.ethanjohnson.flipside.screen.collection.CollectionScreen
 import com.ethanjohnson.flipside.screen.detail.MediaDetailScreen
 import com.ethanjohnson.flipside.screen.edit.EditMediaScreen
 import com.ethanjohnson.flipside.screen.home.HomeScreen
+import com.ethanjohnson.flipside.screen.recommendation.RecommendationDetailScreen
 import com.ethanjohnson.flipside.screen.wishlist.WishlistScreen
 
 @Composable
@@ -27,13 +36,41 @@ fun FlipSideNavigation(
     mediaRepository: MediaRepository,
     useNavigationRail: Boolean
 ) {
-    val collectionItems by mediaRepository
+    val collectionItems by
+    mediaRepository
         .collectionItems
         .collectAsState()
 
-    val wishlistItems by mediaRepository
+    val wishlistItems by
+    mediaRepository
         .wishlistItems
         .collectAsState()
+
+    val searchRepository:
+            MediaSearchRepository =
+        remember {
+            CachedMediaSearchRepository(
+                database =
+                    mediaRepository.database,
+                searchService =
+                    MusicBrainzSearchService()
+            )
+        }
+
+    val recommendationService =
+        remember {
+            LocalMediaRecommendationService()
+        }
+
+    val recommendationCandidateService =
+        remember(
+            searchRepository
+        ) {
+            RecommendationCandidateService(
+                searchRepository =
+                    searchRepository
+            )
+        }
 
     var currentDestination by remember {
         mutableStateOf(
@@ -45,8 +82,60 @@ fun FlipSideNavigation(
         mutableStateOf<String?>(null)
     }
 
+    var selectedRecommendation by remember {
+        mutableStateOf<MediaSearchResult?>(
+            null
+        )
+    }
+
     var isEditingMedia by remember {
         mutableStateOf(false)
+    }
+
+    val recommendationItems by
+    produceState<List<MediaSearchResult>>(
+        initialValue =
+            emptyList(),
+        collectionItems,
+        wishlistItems,
+        currentDestination
+    ) {
+        if (
+            currentDestination !=
+            FlipSideDestination.HOME
+        ) {
+            value =
+                emptyList()
+
+            return@produceState
+        }
+
+        if (
+            collectionItems.isEmpty()
+        ) {
+            value =
+                emptyList()
+
+            return@produceState
+        }
+
+        val candidates =
+            recommendationCandidateService
+                .discoverCandidates(
+                    collection =
+                        collectionItems
+                )
+
+        value =
+            recommendationService
+                .recommendations(
+                    collection =
+                        collectionItems,
+                    wishlist =
+                        wishlistItems,
+                    candidates =
+                        candidates
+                )
     }
 
     val onDestinationSelected:
@@ -59,6 +148,9 @@ fun FlipSideNavigation(
             selectedMediaItemId =
                 null
 
+            selectedRecommendation =
+                null
+
             isEditingMedia =
                 false
         }
@@ -69,6 +161,23 @@ fun FlipSideNavigation(
 
             selectedMediaItemId =
                 item.id
+
+            selectedRecommendation =
+                null
+
+            isEditingMedia =
+                false
+        }
+
+    val onRecommendationClick:
+                (MediaSearchResult) -> Unit =
+        { result ->
+
+            selectedRecommendation =
+                result
+
+            selectedMediaItemId =
+                null
 
             isEditingMedia =
                 false
@@ -105,23 +214,33 @@ fun FlipSideNavigation(
                     collectionItems,
                 wishlistItems =
                     wishlistItems,
+                recommendationItems =
+                    recommendationItems,
                 selectedMediaItemId =
                     selectedMediaItemId,
+                selectedRecommendation =
+                    selectedRecommendation,
                 isEditingMedia =
                     isEditingMedia,
                 mediaRepository =
                     mediaRepository,
+                searchRepository =
+                    searchRepository,
                 onMediaClick =
                     onMediaClick,
+                onRecommendationClick =
+                    onRecommendationClick,
+                onRecommendationBack = {
+                    selectedRecommendation =
+                        null
+                },
                 onMediaDetailBack =
                     onMediaDetailBack,
                 onEditMedia = {
-                    isEditingMedia =
-                        true
+                    isEditingMedia = true
                 },
                 onEditFinished = {
-                    isEditingMedia =
-                        false
+                    isEditingMedia = false
                 }
             )
         }
@@ -146,23 +265,33 @@ fun FlipSideNavigation(
                     collectionItems,
                 wishlistItems =
                     wishlistItems,
+                recommendationItems =
+                    recommendationItems,
                 selectedMediaItemId =
                     selectedMediaItemId,
+                selectedRecommendation =
+                    selectedRecommendation,
                 isEditingMedia =
                     isEditingMedia,
                 mediaRepository =
                     mediaRepository,
+                searchRepository =
+                    searchRepository,
                 onMediaClick =
                     onMediaClick,
+                onRecommendationClick =
+                    onRecommendationClick,
+                onRecommendationBack = {
+                    selectedRecommendation =
+                        null
+                },
                 onMediaDetailBack =
                     onMediaDetailBack,
                 onEditMedia = {
-                    isEditingMedia =
-                        true
+                    isEditingMedia = true
                 },
                 onEditFinished = {
-                    isEditingMedia =
-                        false
+                    isEditingMedia = false
                 },
                 contentPadding =
                     innerPadding
@@ -179,14 +308,24 @@ private fun FlipSideContent(
     List<MediaItem>,
     wishlistItems:
     List<MediaItem>,
+    recommendationItems:
+    List<MediaSearchResult>,
     selectedMediaItemId:
     String?,
+    selectedRecommendation:
+    MediaSearchResult?,
     isEditingMedia:
     Boolean,
     mediaRepository:
     MediaRepository,
+    searchRepository:
+    MediaSearchRepository,
     onMediaClick:
         (MediaItem) -> Unit,
+    onRecommendationClick:
+        (MediaSearchResult) -> Unit,
+    onRecommendationBack:
+        () -> Unit,
     onMediaDetailBack:
         () -> Unit,
     onEditMedia:
@@ -299,15 +438,90 @@ private fun FlipSideContent(
             return@Box
         }
 
-        when (
-            currentDestination
+        if (
+            selectedRecommendation != null
         ) {
+            val result =
+                selectedRecommendation
+
+            RecommendationDetailScreen(
+                result = result,
+                onBack =
+                    onRecommendationBack,
+                onAddToCollection = {
+                    val format =
+                        result.format
+
+                    if (format != null) {
+                        mediaRepository
+                            .addToCollection(
+                                title =
+                                    result.title,
+                                subtitle =
+                                    result.subtitle,
+                                format =
+                                    format,
+                                year =
+                                    result.year,
+                                edition =
+                                    result.edition,
+                                condition =
+                                    null,
+                                purchasePrice =
+                                    null,
+                                notes =
+                                    null,
+                                coverArtUrl =
+                                    result.coverArtUrl
+                            )
+
+                        onRecommendationBack()
+                    }
+                },
+                onAddToWishlist = {
+                    val format =
+                        result.format
+
+                    if (format != null) {
+                        mediaRepository
+                            .addToWishlist(
+                                title =
+                                    result.title,
+                                subtitle =
+                                    result.subtitle,
+                                format =
+                                    format,
+                                year =
+                                    result.year,
+                                edition =
+                                    result.edition,
+                                condition =
+                                    null,
+                                notes =
+                                    null,
+                                coverArtUrl =
+                                    result.coverArtUrl
+                            )
+
+                        onRecommendationBack()
+                    }
+                }
+            )
+
+            return@Box
+        }
+
+        when (currentDestination) {
             FlipSideDestination.HOME -> {
                 HomeScreen(
                     collectionItems =
                         collectionItems,
+                    recommendationItems =
+                        recommendationItems,
                     onMediaClick =
-                        onMediaClick
+                        onMediaClick,
+                    onRecommendationClick =
+                        onRecommendationClick
                 )
             }
 
@@ -322,6 +536,9 @@ private fun FlipSideContent(
 
             FlipSideDestination.ADD -> {
                 AddScreen(
+                    searchRepository =
+                        searchRepository,
+
                     onAddToCollection = {
                             title,
                             subtitle,
@@ -330,27 +547,25 @@ private fun FlipSideContent(
                             edition,
                             condition,
                             purchasePrice,
-                            notes ->
+                            notes,
+                            coverArtUrl ->
 
                         mediaRepository
                             .addToCollection(
                                 title = title,
-                                subtitle =
-                                    subtitle,
-                                format =
-                                    format,
-                                year =
-                                    year,
-                                edition =
-                                    edition,
-                                condition =
-                                    condition,
+                                subtitle = subtitle,
+                                format = format,
+                                year = year,
+                                edition = edition,
+                                condition = condition,
                                 purchasePrice =
                                     purchasePrice,
-                                notes =
-                                    notes
+                                notes = notes,
+                                coverArtUrl =
+                                    coverArtUrl
                             )
                     },
+
                     onAddToWishlist = {
                             title,
                             subtitle,
@@ -358,23 +573,20 @@ private fun FlipSideContent(
                             year,
                             edition,
                             condition,
-                            notes ->
+                            notes,
+                            coverArtUrl ->
 
                         mediaRepository
                             .addToWishlist(
                                 title = title,
-                                subtitle =
-                                    subtitle,
-                                format =
-                                    format,
-                                year =
-                                    year,
-                                edition =
-                                    edition,
-                                condition =
-                                    condition,
-                                notes =
-                                    notes
+                                subtitle = subtitle,
+                                format = format,
+                                year = year,
+                                edition = edition,
+                                condition = condition,
+                                notes = notes,
+                                coverArtUrl =
+                                    coverArtUrl
                             )
                     }
                 )
@@ -402,7 +614,7 @@ private fun DiscoverPlaceholder() {
         modifier =
             Modifier.fillMaxSize(),
         contentAlignment =
-            androidx.compose.ui.Alignment.Center
+            Alignment.Center
     ) {
         androidx.compose.material3.Text(
             text = "Discover"

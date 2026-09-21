@@ -28,7 +28,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
-import com.ethanjohnson.flipside.data.FakeMediaData
 import com.ethanjohnson.flipside.model.MediaFormat
 import com.ethanjohnson.flipside.model.MediaItem
 import com.ethanjohnson.flipside.screen.collection.CollectionFilter
@@ -205,6 +204,7 @@ fun WishlistScreen(
                                 title = item.title,
                                 subtitle = mediaSubtitle(item),
                                 format = item.format.displayName,
+                                coverArtUrl = item.coverArtUrl,
                                 modifier = Modifier.fillMaxWidth(),
                                 onClick = {
                                     onMediaClick(item)

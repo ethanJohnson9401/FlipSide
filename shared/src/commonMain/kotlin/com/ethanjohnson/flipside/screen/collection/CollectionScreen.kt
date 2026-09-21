@@ -292,6 +292,7 @@ fun CollectionScreen(
                                         title = item.title,
                                         subtitle = mediaSubtitle(item),
                                         format = item.format.displayName,
+                                        coverArtUrl = item.coverArtUrl,
                                         modifier = Modifier.fillMaxWidth(),
                                         onClick = {
                                             onMediaClick(item)

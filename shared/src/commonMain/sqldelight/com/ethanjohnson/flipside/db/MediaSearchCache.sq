@@ -1,0 +1,52 @@
+CREATE TABLE media_search_cache (
+    cache_id TEXT NOT NULL PRIMARY KEY,
+    query TEXT NOT NULL,
+    external_id TEXT NOT NULL,
+    title TEXT NOT NULL,
+    subtitle TEXT NOT NULL,
+    release_year INTEGER,
+    format TEXT,
+    edition TEXT,
+    cover_art_url TEXT,
+    source TEXT NOT NULL,
+    cached_at INTEGER NOT NULL
+);
+
+selectByQuery:
+SELECT *
+FROM media_search_cache
+WHERE query = ?
+ORDER BY title ASC;
+
+selectRecentCandidates:
+SELECT *
+FROM media_search_cache
+ORDER BY cached_at DESC
+LIMIT ?;
+
+deleteByQuery:
+DELETE FROM media_search_cache
+WHERE query = ?;
+
+deleteExpired:
+DELETE FROM media_search_cache
+WHERE cached_at < ?;
+
+deleteAll:
+DELETE FROM media_search_cache;
+
+insertResult:
+INSERT OR REPLACE INTO media_search_cache(
+    cache_id,
+    query,
+    external_id,
+    title,
+    subtitle,
+    release_year,
+    format,
+    edition,
+    cover_art_url,
+    source,
+    cached_at
+)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);

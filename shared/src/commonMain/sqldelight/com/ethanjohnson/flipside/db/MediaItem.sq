@@ -9,6 +9,7 @@ CREATE TABLE media_item (
     notes TEXT,
     purchase_price REAL,
     date_added INTEGER,
+    cover_art_url TEXT,
     is_owned INTEGER NOT NULL,
     is_wishlisted INTEGER NOT NULL,
     added_order INTEGER NOT NULL
@@ -31,10 +32,6 @@ SELECT *
 FROM media_item
 WHERE id = ?;
 
-countItems:
-SELECT COUNT(*)
-FROM media_item;
-
 maxAddedOrder:
 SELECT COALESCE(MAX(added_order), 0)
 FROM media_item;
@@ -51,11 +48,12 @@ INSERT OR REPLACE INTO media_item(
     notes,
     purchase_price,
     date_added,
+    cover_art_url,
     is_owned,
     is_wishlisted,
     added_order
 )
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
 
 updateItem:
 UPDATE media_item
@@ -68,6 +66,7 @@ SET
     condition = ?,
     notes = ?,
     purchase_price = ?,
+    cover_art_url = ?,
     is_owned = ?,
     is_wishlisted = ?
 WHERE id = ?;
