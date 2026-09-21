@@ -21,6 +21,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.ethanjohnson.flipside.ui.components.CollectionStatCard
 import com.ethanjohnson.flipside.ui.components.MediaCard
@@ -94,8 +95,14 @@ fun HomeScreen() {
         modifier = Modifier.fillMaxSize()
     ) {
         val isWideLayout = maxWidth >= 900.dp
-        val horizontalPadding = if (isWideLayout) 32.dp else 16.dp
-        val mediaCardWidth = if (isWideLayout) 190.dp else 170.dp
+
+        val horizontalPadding = if (isWideLayout) {
+            32.dp
+        } else {
+            16.dp
+        }
+
+        val mobileCardWidth = 170.dp
 
         Box(
             modifier = Modifier.fillMaxSize(),
@@ -141,88 +148,18 @@ fun HomeScreen() {
                 }
 
                 item {
-                    Column(
-                        verticalArrangement = Arrangement.spacedBy(14.dp)
-                    ) {
-                        SectionHeader(title = "Your Collection")
-
-                        if (isWideLayout) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(12.dp)
-                            ) {
-                                CollectionStatCard(
-                                    label = "Vinyl",
-                                    count = 42,
-                                    modifier = Modifier.weight(1f)
-                                )
-
-                                CollectionStatCard(
-                                    label = "CDs",
-                                    count = 68,
-                                    modifier = Modifier.weight(1f)
-                                )
-
-                                CollectionStatCard(
-                                    label = "VHS",
-                                    count = 17,
-                                    modifier = Modifier.weight(1f)
-                                )
-
-                                CollectionStatCard(
-                                    label = "Games",
-                                    count = 31,
-                                    modifier = Modifier.weight(1f)
-                                )
-                            }
-                        } else {
-                            Column(
-                                verticalArrangement = Arrangement.spacedBy(12.dp)
-                            ) {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                                ) {
-                                    CollectionStatCard(
-                                        label = "Vinyl",
-                                        count = 42,
-                                        modifier = Modifier.weight(1f)
-                                    )
-
-                                    CollectionStatCard(
-                                        label = "CDs",
-                                        count = 68,
-                                        modifier = Modifier.weight(1f)
-                                    )
-                                }
-
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                                ) {
-                                    CollectionStatCard(
-                                        label = "VHS",
-                                        count = 17,
-                                        modifier = Modifier.weight(1f)
-                                    )
-
-                                    CollectionStatCard(
-                                        label = "Games",
-                                        count = 31,
-                                        modifier = Modifier.weight(1f)
-                                    )
-                                }
-                            }
-                        }
-                    }
+                    CollectionStats(
+                        wideLayout = isWideLayout
+                    )
                 }
 
                 item {
                     MediaSection(
                         title = "Recently Added",
                         actionText = "See All",
-                        items = recentItems,
-                        cardWidth = mediaCardWidth
+                        mediaItems = recentItems,
+                        wideLayout = isWideLayout,
+                        mobileCardWidth = mobileCardWidth
                     )
                 }
 
@@ -230,8 +167,9 @@ fun HomeScreen() {
                     MediaSection(
                         title = "Picked For You",
                         actionText = "Explore",
-                        items = recommendations,
-                        cardWidth = mediaCardWidth
+                        mediaItems = recommendations,
+                        wideLayout = isWideLayout,
+                        mobileCardWidth = mobileCardWidth
                     )
                 }
 
@@ -244,11 +182,94 @@ fun HomeScreen() {
 }
 
 @Composable
+private fun CollectionStats(
+    wideLayout: Boolean
+) {
+    Column(
+        verticalArrangement = Arrangement.spacedBy(14.dp)
+    ) {
+        SectionHeader(
+            title = "Your Collection"
+        )
+
+        if (wideLayout) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                CollectionStatCard(
+                    label = "Vinyl",
+                    count = 42,
+                    modifier = Modifier.weight(1f)
+                )
+
+                CollectionStatCard(
+                    label = "CDs",
+                    count = 68,
+                    modifier = Modifier.weight(1f)
+                )
+
+                CollectionStatCard(
+                    label = "VHS",
+                    count = 17,
+                    modifier = Modifier.weight(1f)
+                )
+
+                CollectionStatCard(
+                    label = "Games",
+                    count = 31,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+        } else {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    CollectionStatCard(
+                        label = "Vinyl",
+                        count = 42,
+                        modifier = Modifier.weight(1f)
+                    )
+
+                    CollectionStatCard(
+                        label = "CDs",
+                        count = 68,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    CollectionStatCard(
+                        label = "VHS",
+                        count = 17,
+                        modifier = Modifier.weight(1f)
+                    )
+
+                    CollectionStatCard(
+                        label = "Games",
+                        count = 31,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
 private fun MediaSection(
     title: String,
     actionText: String,
-    items: List<DemoMediaItem>,
-    cardWidth: androidx.compose.ui.unit.Dp
+    mediaItems: List<DemoMediaItem>,
+    wideLayout: Boolean,
+    mobileCardWidth: Dp
 ) {
     Column(
         verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -258,17 +279,53 @@ private fun MediaSection(
             actionText = actionText
         )
 
-        LazyRow(
-            horizontalArrangement = Arrangement.spacedBy(14.dp)
-        ) {
-            items(items) { item ->
-                MediaCard(
-                    title = item.title,
-                    subtitle = item.subtitle,
-                    format = item.format,
-                    modifier = Modifier.width(cardWidth)
-                )
-            }
+        if (wideLayout) {
+            DesktopMediaRow(
+                mediaItems = mediaItems
+            )
+        } else {
+            MobileMediaRow(
+                mediaItems = mediaItems,
+                cardWidth = mobileCardWidth
+            )
+        }
+    }
+}
+
+@Composable
+private fun DesktopMediaRow(
+    mediaItems: List<DemoMediaItem>
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(14.dp)
+    ) {
+        mediaItems.take(5).forEach { item ->
+            MediaCard(
+                title = item.title,
+                subtitle = item.subtitle,
+                format = item.format,
+                modifier = Modifier.weight(1f)
+            )
+        }
+    }
+}
+
+@Composable
+private fun MobileMediaRow(
+    mediaItems: List<DemoMediaItem>,
+    cardWidth: Dp
+) {
+    LazyRow(
+        horizontalArrangement = Arrangement.spacedBy(14.dp)
+    ) {
+        items(mediaItems) { item ->
+            MediaCard(
+                title = item.title,
+                subtitle = item.subtitle,
+                format = item.format,
+                modifier = Modifier.width(cardWidth)
+            )
         }
     }
 }
