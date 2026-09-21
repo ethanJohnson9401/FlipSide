@@ -5,19 +5,22 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
+import com.ethanjohnson.flipside.data.MediaRepository
 import com.ethanjohnson.flipside.ui.navigation.FlipSideNavigation
 import com.ethanjohnson.flipside.ui.theme.FlipSideTheme
 
 @Composable
-@Preview
-fun App() {
+fun App(
+    mediaRepository: MediaRepository
+) {
     FlipSideTheme {
         Surface(
             modifier = Modifier.fillMaxSize(),
             color = MaterialTheme.colorScheme.background
         ) {
-            FlipSideNavigation()
+            FlipSideNavigation(
+                mediaRepository = mediaRepository
+            )
         }
     }
 }

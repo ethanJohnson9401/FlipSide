@@ -1,20 +1,21 @@
 package com.ethanjohnson.flipside.data
 
 import androidx.compose.runtime.mutableStateListOf
+import com.ethanjohnson.flipside.db.FlipSideDatabase
 import com.ethanjohnson.flipside.model.MediaFormat
 import com.ethanjohnson.flipside.model.MediaItem
 
-class MediaRepository {
+class MediaRepository(
+    private val database: FlipSideDatabase
+) {
 
-    val collectionItems = mutableStateListOf<MediaItem>().apply {
-        addAll(FakeMediaData.collectionItems)
+    val collectionItems = mutableStateListOf<MediaItem>()
+    val wishlistItems = mutableStateListOf<MediaItem>()
+
+    init {
+        seedDatabaseIfEmpty()
+        refresh()
     }
-
-    val wishlistItems = mutableStateListOf<MediaItem>().apply {
-        addAll(FakeMediaData.wishlistItems)
-    }
-
-    private var nextGeneratedId = 1
 
     fun addToCollection(
         title: String,
@@ -26,25 +27,24 @@ class MediaRepository {
         purchasePrice: Double?,
         notes: String?
     ) {
-        val item = MediaItem(
-            id = generateId(),
-            title = title.trim(),
-            subtitle = subtitle.trim(),
-            format = format,
-            year = year,
-            edition = edition.nullIfBlank(),
-            condition = condition.nullIfBlank(),
-            notes = notes.nullIfBlank(),
-            purchasePrice = purchasePrice,
-            dateAdded = "Just now",
-            isOwned = true,
-            isWishlisted = false
+        insert(
+            item = MediaItem(
+                id = generateId(),
+                title = title.trim(),
+                subtitle = subtitle.trim(),
+                format = format,
+                year = year,
+                edition = edition.nullIfBlank(),
+                condition = condition.nullIfBlank(),
+                notes = notes.nullIfBlank(),
+                purchasePrice = purchasePrice,
+                dateAdded = "Just now",
+                isOwned = true,
+                isWishlisted = false
+            )
         )
 
-        collectionItems.add(
-            index = 0,
-            element = item
-        )
+        refresh()
     }
 
     fun addToWishlist(
@@ -56,34 +56,124 @@ class MediaRepository {
         condition: String?,
         notes: String?
     ) {
-        val item = MediaItem(
-            id = generateId(),
-            title = title.trim(),
-            subtitle = subtitle.trim(),
-            format = format,
-            year = year,
-            edition = edition.nullIfBlank(),
-            condition = condition.nullIfBlank(),
-            notes = notes.nullIfBlank(),
-            purchasePrice = null,
-            dateAdded = "Just now",
-            isOwned = false,
-            isWishlisted = true
+        insert(
+            item = MediaItem(
+                id = generateId(),
+                title = title.trim(),
+                subtitle = subtitle.trim(),
+                format = format,
+                year = year,
+                edition = edition.nullIfBlank(),
+                condition = condition.nullIfBlank(),
+                notes = notes.nullIfBlank(),
+                purchasePrice = null,
+                dateAdded = "Just now",
+                isOwned = false,
+                isWishlisted = true
+            )
         )
 
-        wishlistItems.add(
-            index = 0,
-            element = item
+        refresh()
+    }
+
+    private fun insert(
+        item: MediaItem
+    ) {
+        database.mediaItemQueries.insertItem(
+            id = item.id,
+            title = item.title,
+            subtitle = item.subtitle,
+            format = item.format.name,
+            release_year = item.year?.toLong(),
+            edition = item.edition,
+            condition = item.condition,
+            notes = item.notes,
+            purchase_price = item.purchasePrice,
+            date_added = item.dateAdded,
+            is_owned = if (item.isOwned) 1 else 0,
+            is_wishlisted = if (item.isWishlisted) 1 else 0,
+            added_order = nextOrder()
         )
     }
 
+    private fun refresh() {
+        val collection = database.mediaItemQueries
+            .selectCollection(::mapMediaItem)
+            .executeAsList()
+
+        val wishlist = database.mediaItemQueries
+            .selectWishlist(::mapMediaItem)
+            .executeAsList()
+
+        collectionItems.clear()
+        collectionItems.addAll(collection)
+
+        wishlistItems.clear()
+        wishlistItems.addAll(wishlist)
+    }
+
+    private fun seedDatabaseIfEmpty() {
+        val count = database.mediaItemQueries
+            .countItems()
+            .executeAsOne()
+
+        if (count != 0L) {
+            return
+        }
+
+        val seedItems =
+            FakeMediaData.collectionItems +
+                    FakeMediaData.wishlistItems
+
+        seedItems.reversed().forEach { item ->
+            insert(item)
+        }
+    }
+
+    private fun nextOrder(): Long {
+        return database.mediaItemQueries
+            .maxAddedOrder()
+            .executeAsOne() + 1
+    }
+
     private fun generateId(): String {
-        return "user-media-${nextGeneratedId++}"
+        return "user-media-${nextOrder()}"
+    }
+
+    private fun mapMediaItem(
+        id: String,
+        title: String,
+        subtitle: String,
+        format: String,
+        release_year: Long?,
+        edition: String?,
+        condition: String?,
+        notes: String?,
+        purchase_price: Double?,
+        date_added: String?,
+        is_owned: Long,
+        is_wishlisted: Long,
+        added_order: Long
+    ): MediaItem {
+        return MediaItem(
+            id = id,
+            title = title,
+            subtitle = subtitle,
+            format = MediaFormat.valueOf(format),
+            year = release_year?.toInt(),
+            edition = edition,
+            condition = condition,
+            notes = notes,
+            purchasePrice = purchase_price,
+            dateAdded = date_added,
+            isOwned = is_owned != 0L,
+            isWishlisted = is_wishlisted != 0L
+        )
     }
 }
 
 private fun String?.nullIfBlank(): String? {
-    return if (this.isNullOrBlank()) {
+    return if (isNullOrBlank()) {
         null
     } else {
         trim()

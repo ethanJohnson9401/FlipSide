@@ -25,11 +25,9 @@ import com.ethanjohnson.flipside.screen.wishlist.WishlistScreen
 import com.ethanjohnson.flipside.data.MediaRepository
 
 @Composable
-fun FlipSideNavigation() {
-
-    val mediaRepository = remember {
-        MediaRepository()
-    }
+fun FlipSideNavigation(
+    mediaRepository: MediaRepository
+) {
 
     var currentDestination by remember {
         mutableStateOf(FlipSideDestination.HOME)
