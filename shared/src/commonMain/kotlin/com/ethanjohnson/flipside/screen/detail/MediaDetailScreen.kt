@@ -38,6 +38,8 @@ import androidx.compose.ui.unit.dp
 import com.ethanjohnson.flipside.model.MediaItem
 import com.ethanjohnson.flipside.ui.components.FormatBadge
 import kotlin.time.Clock
+import androidx.compose.ui.layout.ContentScale
+import coil3.compose.AsyncImage
 
 @Composable
 fun MediaDetailScreen(
@@ -306,34 +308,70 @@ private fun MediaArtwork(
     item: MediaItem,
     modifier: Modifier = Modifier
 ) {
+    var imageFailed by remember(
+        item.coverArtUrl
+    ) {
+        mutableStateOf(false)
+    }
+
     Card(
         modifier = modifier,
         shape =
             MaterialTheme.shapes.extraLarge,
-        colors = CardDefaults.cardColors(
-            containerColor =
-                MaterialTheme.colorScheme.primaryContainer
-        )
+        colors =
+            CardDefaults.cardColors(
+                containerColor =
+                    MaterialTheme
+                        .colorScheme
+                        .primaryContainer
+            )
     ) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .aspectRatio(1f)
                 .background(
-                    MaterialTheme.colorScheme.primaryContainer
+                    MaterialTheme
+                        .colorScheme
+                        .primaryContainer
                 ),
-            contentAlignment = Alignment.Center
+            contentAlignment =
+                Alignment.Center
         ) {
-            Text(
-                text =
-                    item.title
-                        .take(1)
-                        .uppercase(),
-                style =
-                    MaterialTheme.typography.displayLarge,
-                color =
-                    MaterialTheme.colorScheme.onPrimaryContainer
-            )
+            if (
+                item.coverArtUrl != null &&
+                !imageFailed
+            ) {
+                AsyncImage(
+                    model =
+                        item.coverArtUrl,
+                    contentDescription =
+                        "Cover art for ${item.title}",
+                    modifier =
+                        Modifier.fillMaxSize(),
+                    contentScale =
+                        ContentScale.Crop,
+                    onError = {
+                        imageFailed =
+                            true
+                    }
+                )
+            } else {
+                Text(
+                    text =
+                        item.title
+                            .take(1)
+                            .uppercase(),
+                    style =
+                        MaterialTheme
+                            .typography
+                            .displayLarge,
+                    color =
+                        MaterialTheme
+                            .colorScheme
+                            .onPrimaryContainer
+                )
+            }
         }
     }
 }

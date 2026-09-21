@@ -9,23 +9,28 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlin.time.Clock
 
 class MediaRepository(
-    private val database: FlipSideDatabase
+    val database: FlipSideDatabase
 ) {
 
     private val _collectionItems =
-        MutableStateFlow<List<MediaItem>>(emptyList())
+        MutableStateFlow<List<MediaItem>>(
+            emptyList()
+        )
 
-    val collectionItems: StateFlow<List<MediaItem>> =
+    val collectionItems:
+            StateFlow<List<MediaItem>> =
         _collectionItems.asStateFlow()
 
     private val _wishlistItems =
-        MutableStateFlow<List<MediaItem>>(emptyList())
+        MutableStateFlow<List<MediaItem>>(
+            emptyList()
+        )
 
-    val wishlistItems: StateFlow<List<MediaItem>> =
+    val wishlistItems:
+            StateFlow<List<MediaItem>> =
         _wishlistItems.asStateFlow()
 
     init {
-        seedDatabaseIfEmpty()
         refresh()
     }
 
@@ -37,27 +42,40 @@ class MediaRepository(
         edition: String?,
         condition: String?,
         purchasePrice: Double?,
-        notes: String?
+        notes: String?,
+        coverArtUrl: String? = null
     ) {
-        insert(
-            item = MediaItem(
+        val now =
+            Clock.System
+                .now()
+                .toEpochMilliseconds()
+
+        val item =
+            MediaItem(
                 id = generateId(),
                 title = title.trim(),
                 subtitle = subtitle.trim(),
                 format = format,
                 year = year,
-                edition = edition.nullIfBlank(),
-                condition = condition.nullIfBlank(),
-                notes = notes.nullIfBlank(),
-                purchasePrice = purchasePrice,
-                dateAdded = Clock.System
-                    .now()
-                    .toEpochMilliseconds(),
-                isOwned = true,
-                isWishlisted = false
+                edition =
+                    edition.nullIfBlank(),
+                condition =
+                    condition.nullIfBlank(),
+                notes =
+                    notes.nullIfBlank(),
+                purchasePrice =
+                    purchasePrice,
+                dateAdded =
+                    now,
+                coverArtUrl =
+                    coverArtUrl,
+                isOwned =
+                    true,
+                isWishlisted =
+                    false
             )
-        )
 
+        insertMediaItem(item)
         refresh()
     }
 
@@ -68,26 +86,82 @@ class MediaRepository(
         year: Int?,
         edition: String?,
         condition: String?,
-        notes: String?
+        notes: String?,
+        coverArtUrl: String? = null
     ) {
-        insert(
-            item = MediaItem(
+        val now =
+            Clock.System
+                .now()
+                .toEpochMilliseconds()
+
+        val item =
+            MediaItem(
                 id = generateId(),
                 title = title.trim(),
                 subtitle = subtitle.trim(),
                 format = format,
                 year = year,
-                edition = edition.nullIfBlank(),
-                condition = condition.nullIfBlank(),
-                notes = notes.nullIfBlank(),
-                purchasePrice = null,
-                dateAdded = Clock.System
-                    .now()
-                    .toEpochMilliseconds(),
-                isOwned = false,
-                isWishlisted = true
+                edition =
+                    edition.nullIfBlank(),
+                condition =
+                    condition.nullIfBlank(),
+                notes =
+                    notes.nullIfBlank(),
+                purchasePrice =
+                    null,
+                dateAdded =
+                    now,
+                coverArtUrl =
+                    coverArtUrl,
+                isOwned =
+                    false,
+                isWishlisted =
+                    true
             )
-        )
+
+        insertMediaItem(item)
+        refresh()
+    }
+
+    fun updateMediaItem(
+        item: MediaItem
+    ) {
+        database
+            .mediaItemQueries
+            .updateItem(
+                title =
+                    item.title.trim(),
+                subtitle =
+                    item.subtitle.trim(),
+                format =
+                    item.format.databaseValue,
+                release_year =
+                    item.year?.toLong(),
+                edition =
+                    item.edition.nullIfBlank(),
+                condition =
+                    item.condition.nullIfBlank(),
+                notes =
+                    item.notes.nullIfBlank(),
+                purchase_price =
+                    item.purchasePrice,
+                cover_art_url =
+                    item.coverArtUrl,
+                is_owned =
+                    if (item.isOwned) {
+                        1L
+                    } else {
+                        0L
+                    },
+                is_wishlisted =
+                    if (item.isWishlisted) {
+                        1L
+                    } else {
+                        0L
+                    },
+                id =
+                    item.id
+            )
 
         refresh()
     }
@@ -95,7 +169,10 @@ class MediaRepository(
     fun deleteMediaItem(
         id: String
     ) {
-        database.mediaItemQueries.deleteById(id)
+        database
+            .mediaItemQueries
+            .deleteById(id)
+
         refresh()
     }
 
@@ -103,10 +180,17 @@ class MediaRepository(
         id: String,
         owned: Boolean
     ) {
-        database.mediaItemQueries.setOwned(
-            is_owned = if (owned) 1L else 0L,
-            id = id
-        )
+        database
+            .mediaItemQueries
+            .setOwned(
+                is_owned =
+                    if (owned) {
+                        1L
+                    } else {
+                        0L
+                    },
+                id = id
+            )
 
         refresh()
     }
@@ -115,10 +199,17 @@ class MediaRepository(
         id: String,
         wishlisted: Boolean
     ) {
-        database.mediaItemQueries.setWishlisted(
-            is_wishlisted = if (wishlisted) 1L else 0L,
-            id = id
-        )
+        database
+            .mediaItemQueries
+            .setWishlisted(
+                is_wishlisted =
+                    if (wishlisted) {
+                        1L
+                    } else {
+                        0L
+                    },
+                id = id
+            )
 
         refresh()
     }
@@ -126,147 +217,165 @@ class MediaRepository(
     fun moveWishlistItemToCollection(
         item: MediaItem
     ) {
-        database.mediaItemQueries.updateItem(
-            title = item.title,
-            subtitle = item.subtitle,
-            format = item.format.databaseValue,
-            release_year = item.year?.toLong(),
-            edition = item.edition,
-            condition = item.condition,
-            notes = item.notes,
-            purchase_price = item.purchasePrice,
-            is_owned = 1L,
-            is_wishlisted = 0L,
-            id = item.id
-        )
+        database
+            .mediaItemQueries
+            .updateItem(
+                title =
+                    item.title.trim(),
+                subtitle =
+                    item.subtitle.trim(),
+                format =
+                    item.format.databaseValue,
+                release_year =
+                    item.year?.toLong(),
+                edition =
+                    item.edition.nullIfBlank(),
+                condition =
+                    item.condition.nullIfBlank(),
+                notes =
+                    item.notes.nullIfBlank(),
+                purchase_price =
+                    item.purchasePrice,
+                cover_art_url =
+                    item.coverArtUrl,
+                is_owned =
+                    1L,
+                is_wishlisted =
+                    0L,
+                id =
+                    item.id
+            )
 
         refresh()
     }
 
-    fun updateMediaItem(
+    private fun insertMediaItem(
         item: MediaItem
     ) {
-        database.mediaItemQueries.updateItem(
-            title = item.title.trim(),
-            subtitle = item.subtitle.trim(),
-            format = item.format.databaseValue,
-            release_year = item.year?.toLong(),
-            edition = item.edition.nullIfBlank(),
-            condition = item.condition.nullIfBlank(),
-            notes = item.notes.nullIfBlank(),
-            purchase_price = item.purchasePrice,
-            is_owned = if (item.isOwned) 1L else 0L,
-            is_wishlisted = if (item.isWishlisted) 1L else 0L,
-            id = item.id
-        )
+        val nextOrder =
+            database
+                .mediaItemQueries
+                .maxAddedOrder()
+                .executeAsOne() + 1L
 
-        refresh()
-    }
-
-    private fun insert(
-        item: MediaItem
-    ) {
-        database.mediaItemQueries.insertItem(
-            id = item.id,
-            title = item.title,
-            subtitle = item.subtitle,
-            format = item.format.databaseValue,
-            release_year = item.year?.toLong(),
-            edition = item.edition,
-            condition = item.condition,
-            notes = item.notes,
-            purchase_price = item.purchasePrice,
-            date_added = item.dateAdded,
-            is_owned = if (item.isOwned) 1L else 0L,
-            is_wishlisted = if (item.isWishlisted) 1L else 0L,
-            added_order = nextOrder()
-        )
+        database
+            .mediaItemQueries
+            .insertItem(
+                id =
+                    item.id,
+                title =
+                    item.title,
+                subtitle =
+                    item.subtitle,
+                format =
+                    item.format.databaseValue,
+                release_year =
+                    item.year?.toLong(),
+                edition =
+                    item.edition,
+                condition =
+                    item.condition,
+                notes =
+                    item.notes,
+                purchase_price =
+                    item.purchasePrice,
+                date_added =
+                    item.dateAdded,
+                cover_art_url =
+                    item.coverArtUrl,
+                is_owned =
+                    if (item.isOwned) {
+                        1L
+                    } else {
+                        0L
+                    },
+                is_wishlisted =
+                    if (item.isWishlisted) {
+                        1L
+                    } else {
+                        0L
+                    },
+                added_order =
+                    nextOrder
+            )
     }
 
     private fun refresh() {
         _collectionItems.value =
-            database.mediaItemQueries
-                .selectCollection(::mapMediaItem)
+            database
+                .mediaItemQueries
+                .selectCollection()
                 .executeAsList()
+                .map {
+                    it.toMediaItem()
+                }
 
         _wishlistItems.value =
-            database.mediaItemQueries
-                .selectWishlist(::mapMediaItem)
+            database
+                .mediaItemQueries
+                .selectWishlist()
                 .executeAsList()
+                .map {
+                    it.toMediaItem()
+                }
+    }
+    private fun generateId():
+            String {
+
+        return "user-media-${
+            Clock.System
+                .now()
+                .toEpochMilliseconds()
+        }"
     }
 
-    private fun seedDatabaseIfEmpty() {
-        val count = database.mediaItemQueries
-            .countItems()
-            .executeAsOne()
+    private fun String?.nullIfBlank():
+            String? {
 
-        if (count != 0L) {
-            return
-        }
-
-        val seedItems =
-            FakeMediaData.collectionItems +
-                    FakeMediaData.wishlistItems
-
-        seedItems
-            .reversed()
-            .forEach { item ->
-                insert(item)
+        return this
+            ?.trim()
+            ?.ifBlank {
+                null
             }
     }
 
-    private fun nextOrder(): Long {
-        return database.mediaItemQueries
-            .maxAddedOrder()
-            .executeAsOne() + 1
-    }
-
-    private fun generateId(): String {
-        return "user-media-${Clock.System.now().toEpochMilliseconds()}"
-    }
-
-    private fun mapMediaItem(
-        id: String,
-        title: String,
-        subtitle: String,
-        format: String,
-        release_year: Long?,
-        edition: String?,
-        condition: String?,
-        notes: String?,
-        purchase_price: Double?,
-        date_added: Long?,
-        is_owned: Long,
-        is_wishlisted: Long,
-        added_order: Long
-    ): MediaItem {
-        val mediaFormat =
-            MediaFormat.fromDatabaseValue(format)
-                ?: error(
-                    "Unknown media format stored in database: $format"
-                )
+    private fun com.ethanjohnson.flipside.db.Media_item
+            .toMediaItem():
+            MediaItem {
 
         return MediaItem(
-            id = id,
-            title = title,
-            subtitle = subtitle,
-            format = mediaFormat,
-            year = release_year?.toInt(),
-            edition = edition,
-            condition = condition,
-            notes = notes,
-            purchasePrice = purchase_price,
-            dateAdded = date_added,
-            isOwned = is_owned != 0L,
-            isWishlisted = is_wishlisted != 0L
+            id =
+                id,
+            title =
+                title,
+            subtitle =
+                subtitle,
+            format =
+                MediaFormat
+                    .fromDatabaseValue(
+                        format
+                    )
+                    ?: error(
+                        "Unknown media format: $format"
+                    ),
+            year =
+                release_year?.toInt(),
+            edition =
+                edition,
+            condition =
+                condition,
+            notes =
+                notes,
+            purchasePrice =
+                purchase_price,
+            dateAdded =
+                date_added,
+            coverArtUrl =
+                cover_art_url,
+            isOwned =
+                is_owned == 1L,
+            isWishlisted =
+                is_wishlisted == 1L
         )
-    }
-}
-
-private fun String?.nullIfBlank(): String? {
-    return if (isNullOrBlank()) {
-        null
-    } else {
-        trim()
     }
 }

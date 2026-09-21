@@ -1,5 +1,6 @@
 package com.ethanjohnson.flipside.screen.add
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -11,8 +12,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.background
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
@@ -29,18 +33,30 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import coil3.compose.AsyncImage
+import com.ethanjohnson.flipside.data.search.MediaSearchRepository
 import com.ethanjohnson.flipside.model.MediaFormat
+import com.ethanjohnson.flipside.model.MediaSearchResult
+import com.ethanjohnson.flipside.ui.components.FormatBadge
+import kotlinx.coroutines.launch
 
-private enum class AddDestination(
-    val label: String
-) {
-    COLLECTION("Collection"),
-    WISHLIST("Wishlist")
+private enum class AddMode {
+    MANUAL,
+    SEARCH
+}
+
+private enum class AddDestination {
+    COLLECTION,
+    WISHLIST
 }
 
 private enum class MediaCondition(
@@ -58,27 +74,37 @@ private enum class MediaCondition(
 
 @Composable
 fun AddScreen(
+    searchRepository: MediaSearchRepository,
     onAddToCollection: (
-        title: String,
-        subtitle: String,
-        format: MediaFormat,
-        year: Int?,
-        edition: String?,
-        condition: String?,
-        purchasePrice: Double?,
-        notes: String?
-    ) -> Unit = { _, _, _, _, _, _, _, _ -> },
-
+        String,
+        String,
+        MediaFormat,
+        Int?,
+        String?,
+        String?,
+        Double?,
+        String?,
+        String?
+    ) -> Unit,
     onAddToWishlist: (
-        title: String,
-        subtitle: String,
-        format: MediaFormat,
-        year: Int?,
-        edition: String?,
-        condition: String?,
-        notes: String?
-    ) -> Unit = { _, _, _, _, _, _, _ -> }
+        String,
+        String,
+        MediaFormat,
+        Int?,
+        String?,
+        String?,
+        String?,
+        String?
+    ) -> Unit
 ) {
+    var addMode by remember {
+        mutableStateOf(AddMode.MANUAL)
+    }
+
+    var destination by remember {
+        mutableStateOf(AddDestination.COLLECTION)
+    }
+
     var selectedFormat by remember {
         mutableStateOf(MediaFormat.VINYL)
     }
@@ -103,7 +129,7 @@ fun AddScreen(
         mutableStateOf<MediaCondition?>(null)
     }
 
-    var conditionMenuExpanded by remember {
+    var conditionExpanded by remember {
         mutableStateOf(false)
     }
 
@@ -115,327 +141,524 @@ fun AddScreen(
         mutableStateOf("")
     }
 
-    var destination by remember {
-        mutableStateOf(AddDestination.COLLECTION)
+    var coverArtUrl by remember {
+        mutableStateOf<String?>(null)
     }
 
-    val canSave = title.isNotBlank()
+    var searchQuery by remember {
+        mutableStateOf("")
+    }
 
-    BoxWithConstraints(
-        modifier = Modifier.fillMaxSize()
+    var searchResults by remember {
+        mutableStateOf<List<MediaSearchResult>>(
+            emptyList()
+        )
+    }
+
+    var isSearching by remember {
+        mutableStateOf(false)
+    }
+
+    val coroutineScope =
+        rememberCoroutineScope()
+
+    fun clearForm() {
+        selectedFormat =
+            MediaFormat.VINYL
+
+        title = ""
+        subtitle = ""
+        year = ""
+        edition = ""
+        condition = null
+        purchasePrice = ""
+        notes = ""
+        coverArtUrl = null
+
+        searchQuery = ""
+        searchResults = emptyList()
+    }
+
+    fun populateFromSearchResult(
+        result: MediaSearchResult
     ) {
-        val isWideLayout = maxWidth >= 900.dp
+        title =
+            result.title
 
-        val horizontalPadding = if (isWideLayout) {
-            32.dp
-        } else {
-            16.dp
+        subtitle =
+            result.subtitle
+
+        year =
+            result.year
+                ?.toString()
+                .orEmpty()
+
+        edition =
+            result.edition
+                .orEmpty()
+
+        coverArtUrl =
+            result.coverArtUrl
+
+        result.format?.let {
+            selectedFormat = it
         }
 
+        addMode =
+            AddMode.MANUAL
+    }
+
+    BoxWithConstraints(
+        modifier =
+            Modifier.fillMaxSize()
+    ) {
+        val horizontalPadding =
+            if (maxWidth >= 900.dp) {
+                32.dp
+            } else {
+                16.dp
+            }
+
         Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.TopCenter
+            modifier =
+                Modifier.fillMaxSize(),
+            contentAlignment =
+                Alignment.TopCenter
         ) {
             Column(
                 modifier = Modifier
                     .widthIn(max = 900.dp)
                     .fillMaxWidth()
-                    .verticalScroll(rememberScrollState())
-                    .padding(horizontal = horizontalPadding),
-                verticalArrangement = Arrangement.spacedBy(24.dp)
+                    .verticalScroll(
+                        rememberScrollState()
+                    )
+                    .padding(
+                        horizontal =
+                            horizontalPadding
+                    ),
+                verticalArrangement =
+                    Arrangement.spacedBy(24.dp)
             ) {
                 Spacer(
-                    modifier = Modifier.height(20.dp)
+                    Modifier.height(20.dp)
                 )
 
-                AddHeader()
-
-                FormatSection(
-                    selectedFormat = selectedFormat,
-                    onFormatSelected = {
-                        selectedFormat = it
-                    }
+                Text(
+                    text = "Add Media",
+                    style =
+                        MaterialTheme
+                            .typography
+                            .displaySmall
                 )
 
-                BasicInfoSection(
-                    title = title,
-                    onTitleChange = {
-                        title = it
-                    },
-                    subtitle = subtitle,
-                    onSubtitleChange = {
-                        subtitle = it
-                    },
-                    year = year,
-                    onYearChange = {
-                        year = it.filter(Char::isDigit).take(4)
-                    }
+                Text(
+                    text =
+                        "Add a physical copy to your collection or wishlist.",
+                    style =
+                        MaterialTheme
+                            .typography
+                            .bodyLarge,
+                    color =
+                        MaterialTheme
+                            .colorScheme
+                            .onSurfaceVariant
                 )
 
-                CopyDetailsSection(
-                    edition = edition,
-                    onEditionChange = {
-                        edition = it
-                    },
-                    condition = condition,
-                    conditionMenuExpanded = conditionMenuExpanded,
-                    onConditionMenuExpandedChange = {
-                        conditionMenuExpanded = it
-                    },
-                    onConditionChange = {
-                        condition = it
-                    },
-                    purchasePrice = purchasePrice,
-                    onPurchasePriceChange = {
-                        purchasePrice = sanitizePrice(it)
-                    },
-                    showPurchasePrice = destination == AddDestination.COLLECTION
-                )
+                Row(
+                    horizontalArrangement =
+                        Arrangement.spacedBy(8.dp)
+                ) {
+                    FilterChip(
+                        selected =
+                            addMode ==
+                                    AddMode.MANUAL,
+                        onClick = {
+                            addMode =
+                                AddMode.MANUAL
+                        },
+                        label = {
+                            Text("Manual")
+                        }
+                    )
 
-                NotesSection(
-                    notes = notes,
-                    onNotesChange = {
-                        notes = it
-                    }
-                )
+                    FilterChip(
+                        selected =
+                            addMode ==
+                                    AddMode.SEARCH,
+                        onClick = {
+                            addMode =
+                                AddMode.SEARCH
+                        },
+                        label = {
+                            Text("Search")
+                        }
+                    )
+                }
 
-                DestinationSection(
-                    destination = destination,
-                    onDestinationSelected = {
-                        destination = it
+                if (
+                    addMode ==
+                    AddMode.SEARCH
+                ) {
+                    Row(
+                        modifier =
+                            Modifier.fillMaxWidth(),
+                        horizontalArrangement =
+                            Arrangement.spacedBy(10.dp),
+                        verticalAlignment =
+                            Alignment.CenterVertically
+                    ) {
+                        OutlinedTextField(
+                            value =
+                                searchQuery,
+                            onValueChange = {
+                                searchQuery = it
+                            },
+                            modifier =
+                                Modifier.weight(1f),
+                            label = {
+                                Text(
+                                    "Title, artist..."
+                                )
+                            },
+                            singleLine = true
+                        )
 
-                        if (it == AddDestination.WISHLIST) {
-                            purchasePrice = ""
+                        Button(
+                            enabled =
+                                searchQuery.isNotBlank() &&
+                                        !isSearching,
+                            onClick = {
+                                coroutineScope.launch {
+                                    isSearching =
+                                        true
+
+                                    try {
+                                        searchResults =
+                                            searchRepository
+                                                .search(
+                                                    searchQuery
+                                                )
+                                    } finally {
+                                        isSearching =
+                                            false
+                                    }
+                                }
+                            }
+                        ) {
+                            Text(
+                                if (isSearching) {
+                                    "Searching..."
+                                } else {
+                                    "Search"
+                                }
+                            )
                         }
                     }
-                )
 
-                ActionSection(
-                    canSave = canSave,
-                    destination = destination,
-                    onSave = {
-                        when (destination) {
-                            AddDestination.COLLECTION -> {
+                    searchResults.forEach {
+                            result ->
+
+                        SearchResultCard(
+                            result =
+                                result,
+                            onClick = {
+                                populateFromSearchResult(
+                                    result
+                                )
+                            }
+                        )
+                    }
+                }
+
+                if (
+                    addMode ==
+                    AddMode.MANUAL
+                ) {
+                    Text(
+                        text = "Add To",
+                        style =
+                            MaterialTheme
+                                .typography
+                                .headlineSmall
+                    )
+
+                    Row(
+                        horizontalArrangement =
+                            Arrangement.spacedBy(8.dp)
+                    ) {
+                        FilterChip(
+                            selected =
+                                destination ==
+                                        AddDestination.COLLECTION,
+                            onClick = {
+                                destination =
+                                    AddDestination.COLLECTION
+                            },
+                            label = {
+                                Text("Collection")
+                            }
+                        )
+
+                        FilterChip(
+                            selected =
+                                destination ==
+                                        AddDestination.WISHLIST,
+                            onClick = {
+                                destination =
+                                    AddDestination.WISHLIST
+                            },
+                            label = {
+                                Text("Wishlist")
+                            }
+                        )
+                    }
+
+                    Text(
+                        text = "Format",
+                        style =
+                            MaterialTheme
+                                .typography
+                                .headlineSmall
+                    )
+
+                    FlowRow(
+                        horizontalArrangement =
+                            Arrangement.spacedBy(8.dp),
+                        verticalArrangement =
+                            Arrangement.spacedBy(8.dp)
+                    ) {
+                        MediaFormat.entries
+                            .forEach { format ->
+
+                                FilterChip(
+                                    selected =
+                                        selectedFormat ==
+                                                format,
+                                    onClick = {
+                                        selectedFormat =
+                                            format
+                                    },
+                                    label = {
+                                        Text(
+                                            format.displayName
+                                        )
+                                    }
+                                )
+                            }
+                    }
+
+                    OutlinedTextField(
+                        value = title,
+                        onValueChange = {
+                            title = it
+                        },
+                        modifier =
+                            Modifier.fillMaxWidth(),
+                        label = {
+                            Text("Title")
+                        },
+                        singleLine = true
+                    )
+
+                    OutlinedTextField(
+                        value = subtitle,
+                        onValueChange = {
+                            subtitle = it
+                        },
+                        modifier =
+                            Modifier.fillMaxWidth(),
+                        label = {
+                            Text(
+                                "Artist, director, developer, or author"
+                            )
+                        },
+                        singleLine = true
+                    )
+
+                    OutlinedTextField(
+                        value = year,
+                        onValueChange = {
+                            year = it
+                                .filter(
+                                    Char::isDigit
+                                )
+                                .take(4)
+                        },
+                        label = {
+                            Text("Year")
+                        },
+                        keyboardOptions =
+                            KeyboardOptions(
+                                keyboardType =
+                                    KeyboardType.Number
+                            ),
+                        singleLine = true
+                    )
+
+                    OutlinedTextField(
+                        value = edition,
+                        onValueChange = {
+                            edition = it
+                        },
+                        modifier =
+                            Modifier.fillMaxWidth(),
+                        label = {
+                            Text("Edition")
+                        }
+                    )
+
+                    Box {
+                        OutlinedButton(
+                            onClick = {
+                                conditionExpanded =
+                                    true
+                            }
+                        ) {
+                            Text(
+                                condition
+                                    ?.label
+                                    ?: "Select condition"
+                            )
+                        }
+
+                        DropdownMenu(
+                            expanded =
+                                conditionExpanded,
+                            onDismissRequest = {
+                                conditionExpanded =
+                                    false
+                            }
+                        ) {
+                            MediaCondition.entries
+                                .forEach {
+                                        option ->
+
+                                    DropdownMenuItem(
+                                        text = {
+                                            Text(
+                                                option.label
+                                            )
+                                        },
+                                        onClick = {
+                                            condition =
+                                                option
+
+                                            conditionExpanded =
+                                                false
+                                        }
+                                    )
+                                }
+                        }
+                    }
+
+                    if (
+                        destination ==
+                        AddDestination.COLLECTION
+                    ) {
+                        OutlinedTextField(
+                            value =
+                                purchasePrice,
+                            onValueChange = {
+                                purchasePrice =
+                                    sanitizePrice(it)
+                            },
+                            label = {
+                                Text(
+                                    "Purchase price"
+                                )
+                            },
+                            prefix = {
+                                Text("$")
+                            },
+                            keyboardOptions =
+                                KeyboardOptions(
+                                    keyboardType =
+                                        KeyboardType.Decimal
+                                )
+                        )
+                    }
+
+                    OutlinedTextField(
+                        value =
+                            notes,
+                        onValueChange = {
+                            notes = it
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(140.dp),
+                        label = {
+                            Text("Notes")
+                        }
+                    )
+
+                    Button(
+                        enabled =
+                            title.isNotBlank(),
+                        onClick = {
+                            if (
+                                destination ==
+                                AddDestination.COLLECTION
+                            ) {
                                 onAddToCollection(
                                     title.trim(),
                                     subtitle.trim(),
                                     selectedFormat,
                                     year.toIntOrNull(),
-                                    edition,
+                                    edition
+                                        .trim()
+                                        .ifBlank {
+                                            null
+                                        },
                                     condition?.label,
-                                    purchasePrice.toDoubleOrNull(),
+                                    purchasePrice
+                                        .toDoubleOrNull(),
                                     notes
+                                        .trim()
+                                        .ifBlank {
+                                            null
+                                        },
+                                    coverArtUrl
                                 )
-                            }
-
-                            AddDestination.WISHLIST -> {
+                            } else {
                                 onAddToWishlist(
                                     title.trim(),
                                     subtitle.trim(),
                                     selectedFormat,
                                     year.toIntOrNull(),
-                                    edition,
+                                    edition
+                                        .trim()
+                                        .ifBlank {
+                                            null
+                                        },
                                     condition?.label,
                                     notes
+                                        .trim()
+                                        .ifBlank {
+                                            null
+                                        },
+                                    coverArtUrl
                                 )
                             }
+
+                            clearForm()
                         }
-
-                        title = ""
-                        subtitle = ""
-                        year = ""
-                        edition = ""
-                        condition = null
-                        purchasePrice = ""
-                        notes = ""
-                    }
-                )
-
-                Spacer(
-                    modifier = Modifier.height(40.dp)
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun AddHeader() {
-    Column(
-        verticalArrangement = Arrangement.spacedBy(6.dp)
-    ) {
-        Text(
-            text = "Add Media",
-            style = MaterialTheme.typography.displaySmall,
-            color = MaterialTheme.colorScheme.onBackground
-        )
-
-        Text(
-            text = "Add a physical copy to your collection or wishlist.",
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-    }
-}
-
-@Composable
-private fun FormatSection(
-    selectedFormat: MediaFormat,
-    onFormatSelected: (MediaFormat) -> Unit
-) {
-    FormSection(
-        title = "Format"
-    ) {
-        FlowRow(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            MediaFormat.entries.forEach { format ->
-                FilterChip(
-                    selected = selectedFormat == format,
-                    onClick = {
-                        onFormatSelected(format)
-                    },
-                    label = {
-                        Text(format.displayName)
-                    }
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun BasicInfoSection(
-    title: String,
-    onTitleChange: (String) -> Unit,
-    subtitle: String,
-    onSubtitleChange: (String) -> Unit,
-    year: String,
-    onYearChange: (String) -> Unit
-) {
-    FormSection(
-        title = "Media Information"
-    ) {
-        Column(
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            OutlinedTextField(
-                value = title,
-                onValueChange = onTitleChange,
-                modifier = Modifier.fillMaxWidth(),
-                label = {
-                    Text("Title")
-                },
-                supportingText = {
-                    Text("Required")
-                },
-                singleLine = true
-            )
-
-            OutlinedTextField(
-                value = subtitle,
-                onValueChange = onSubtitleChange,
-                modifier = Modifier.fillMaxWidth(),
-                label = {
-                    Text("Artist, director, developer, or author")
-                },
-                singleLine = true
-            )
-
-            OutlinedTextField(
-                value = year,
-                onValueChange = onYearChange,
-                modifier = Modifier.widthIn(max = 220.dp),
-                label = {
-                    Text("Year")
-                },
-                keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Number
-                ),
-                singleLine = true
-            )
-        }
-    }
-}
-
-@Composable
-private fun CopyDetailsSection(
-    edition: String,
-    onEditionChange: (String) -> Unit,
-    condition: MediaCondition?,
-    conditionMenuExpanded: Boolean,
-    onConditionMenuExpandedChange: (Boolean) -> Unit,
-    onConditionChange: (MediaCondition) -> Unit,
-    purchasePrice: String,
-    onPurchasePriceChange: (String) -> Unit,
-    showPurchasePrice: Boolean
-) {
-    FormSection(
-        title = "Copy Details"
-    ) {
-        Column(
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            OutlinedTextField(
-                value = edition,
-                onValueChange = onEditionChange,
-                modifier = Modifier.fillMaxWidth(),
-                label = {
-                    Text("Edition")
-                },
-                placeholder = {
-                    Text("Example: US pressing • Harvest Records")
-                },
-                singleLine = true
-            )
-
-            Box {
-                OutlinedButton(
-                    onClick = {
-                        onConditionMenuExpandedChange(true)
-                    }
-                ) {
-                    Text(
-                        text = condition?.label ?: "Select condition"
-                    )
-                }
-
-                DropdownMenu(
-                    expanded = conditionMenuExpanded,
-                    onDismissRequest = {
-                        onConditionMenuExpandedChange(false)
-                    }
-                ) {
-                    MediaCondition.entries.forEach { option ->
-                        DropdownMenuItem(
-                            text = {
-                                Text(option.label)
-                            },
-                            onClick = {
-                                onConditionChange(option)
-                                onConditionMenuExpandedChange(false)
+                    ) {
+                        Text(
+                            if (
+                                destination ==
+                                AddDestination.COLLECTION
+                            ) {
+                                "Add to Collection"
+                            } else {
+                                "Add to Wishlist"
                             }
                         )
                     }
                 }
-            }
 
-            if (showPurchasePrice) {
-                OutlinedTextField(
-                    value = purchasePrice,
-                    onValueChange = onPurchasePriceChange,
-                    modifier = Modifier.widthIn(max = 260.dp),
-                    label = {
-                        Text("Purchase price")
-                    },
-                    prefix = {
-                        Text("$")
-                    },
-                    keyboardOptions = KeyboardOptions(
-                        keyboardType = KeyboardType.Decimal
-                    ),
-                    singleLine = true
+                Spacer(
+                    Modifier.height(40.dp)
                 )
             }
         }
@@ -443,111 +666,83 @@ private fun CopyDetailsSection(
 }
 
 @Composable
-private fun NotesSection(
-    notes: String,
-    onNotesChange: (String) -> Unit
-) {
-    FormSection(
-        title = "Notes"
-    ) {
-        OutlinedTextField(
-            value = notes,
-            onValueChange = onNotesChange,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(140.dp),
-            label = {
-                Text("Notes about this copy")
-            }
-        )
-    }
-}
-
-@Composable
-private fun DestinationSection(
-    destination: AddDestination,
-    onDestinationSelected: (AddDestination) -> Unit
-) {
-    FormSection(
-        title = "Add To"
-    ) {
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            FilterChip(
-                selected = destination == AddDestination.COLLECTION,
-                onClick = {
-                    onDestinationSelected(AddDestination.COLLECTION)
-                },
-                label = {
-                    Text("Collection")
-                }
-            )
-
-            FilterChip(
-                selected = destination == AddDestination.WISHLIST,
-                onClick = {
-                    onDestinationSelected(AddDestination.WISHLIST)
-                },
-                label = {
-                    Text("Wishlist")
-                }
-            )
-        }
-    }
-}
-
-@Composable
-private fun ActionSection(
-    canSave: Boolean,
-    destination: AddDestination,
-    onSave: () -> Unit
+private fun SearchResultCard(
+    result: MediaSearchResult,
+    onClick: () -> Unit
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = MaterialTheme.shapes.large,
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        )
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(
+                onClick = onClick
+            ),
+        colors =
+            CardDefaults.cardColors(
+                containerColor =
+                    MaterialTheme
+                        .colorScheme
+                        .surface
+            )
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(18.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+                .padding(14.dp),
+            horizontalArrangement =
+                Arrangement.spacedBy(16.dp),
+            verticalAlignment =
+                Alignment.CenterVertically
         ) {
+            SearchArtwork(result)
+
             Column(
-                verticalArrangement = Arrangement.spacedBy(3.dp)
+                modifier =
+                    Modifier.weight(1f)
             ) {
                 Text(
-                    text = "Ready to save?",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurface
+                    text =
+                        result.title,
+                    style =
+                        MaterialTheme
+                            .typography
+                            .titleLarge,
+                    maxLines = 2,
+                    overflow =
+                        TextOverflow.Ellipsis
                 )
 
                 Text(
-                    text = when (destination) {
-                        AddDestination.COLLECTION ->
-                            "This copy will be added to your collection."
+                    text = buildString {
+                        append(
+                            result.subtitle
+                        )
 
-                        AddDestination.WISHLIST ->
-                            "This item will be added to your wishlist."
+                        result.year?.let {
+                            append(" • ")
+                            append(it)
+                        }
                     },
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color =
+                        MaterialTheme
+                            .colorScheme
+                            .onSurfaceVariant
                 )
+
+                result.edition?.let {
+                    Text(
+                        text = it,
+                        style =
+                            MaterialTheme
+                                .typography
+                                .bodySmall
+                    )
+                }
             }
 
-            Button(
-                onClick = onSave,
-                enabled = canSave
-            ) {
-                Text(
-                    text = when (destination) {
-                        AddDestination.COLLECTION -> "Add to Collection"
-                        AddDestination.WISHLIST -> "Add to Wishlist"
-                    }
+            result.format?.let {
+                FormatBadge(
+                    text =
+                        it.displayName
                 )
             }
         }
@@ -555,45 +750,89 @@ private fun ActionSection(
 }
 
 @Composable
-private fun FormSection(
-    title: String,
-    content: @Composable () -> Unit
+private fun SearchArtwork(
+    result: MediaSearchResult
 ) {
-    Column(
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+    var failed by remember(
+        result.coverArtUrl
     ) {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.headlineSmall,
-            color = MaterialTheme.colorScheme.onBackground
-        )
+        mutableStateOf(false)
+    }
 
-        content()
+    Box(
+        modifier = Modifier
+            .size(88.dp)
+            .clip(
+                RoundedCornerShape(
+                    10.dp
+                )
+            )
+            .background(
+                MaterialTheme
+                    .colorScheme
+                    .primaryContainer
+            ),
+        contentAlignment =
+            Alignment.Center
+    ) {
+        if (
+            result.coverArtUrl != null &&
+            !failed
+        ) {
+            AsyncImage(
+                model =
+                    result.coverArtUrl,
+                contentDescription =
+                    result.title,
+                modifier =
+                    Modifier.fillMaxSize(),
+                contentScale =
+                    ContentScale.Crop,
+                onError = {
+                    failed = true
+                }
+            )
+        } else {
+            Text(
+                text =
+                    result.title
+                        .take(1)
+                        .uppercase(),
+                style =
+                    MaterialTheme
+                        .typography
+                        .headlineLarge
+            )
+        }
     }
 }
 
 private fun sanitizePrice(
     value: String
 ): String {
-    val filtered = value.filter {
-        it.isDigit() || it == '.'
-    }
+    val filtered =
+        value.filter {
+            it.isDigit() ||
+                    it == '.'
+        }
 
-    val firstDecimal = filtered.indexOf('.')
+    val decimal =
+        filtered.indexOf('.')
 
-    if (firstDecimal == -1) {
+    if (decimal == -1) {
         return filtered
     }
 
-    val whole = filtered.substring(
-        startIndex = 0,
-        endIndex = firstDecimal
-    )
-
-    val decimal = filtered
-        .substring(firstDecimal + 1)
-        .filter(Char::isDigit)
-        .take(2)
-
-    return "$whole.$decimal"
+    return filtered.substring(
+        0,
+        decimal + 1
+    ) +
+            filtered
+                .substring(
+                    decimal + 1
+                )
+                .filter(
+                    Char::isDigit
+                )
+                .take(2)
 }
