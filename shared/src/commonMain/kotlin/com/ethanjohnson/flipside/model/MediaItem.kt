@@ -5,5 +5,15 @@ data class MediaItem(
     val title: String,
     val subtitle: String,
     val format: MediaFormat,
-    val year: Int? = null
+    val year: Int? = null,
+
+    val edition: String? = null,
+    val condition: String? = null,
+    val notes: String? = null,
+
+    val purchasePrice: Double? = null,
+    val dateAdded: String? = null,
+
+    val isOwned: Boolean = true,
+    val isWishlisted: Boolean = false
 )

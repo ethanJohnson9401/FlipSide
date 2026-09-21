@@ -41,6 +41,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.ethanjohnson.flipside.data.FakeMediaData
 import com.ethanjohnson.flipside.model.MediaFormat
 import com.ethanjohnson.flipside.model.MediaItem
 import com.ethanjohnson.flipside.ui.components.FormatBadge
@@ -64,80 +65,7 @@ private enum class CollectionViewMode {
 
 @Composable
 fun CollectionScreen() {
-    val collectionItems = remember {
-        listOf(
-            MediaItem(
-                id = "1",
-                title = "The Dark Side of the Moon",
-                subtitle = "Pink Floyd",
-                format = MediaFormat.VINYL,
-                year = 1973
-            ),
-            MediaItem(
-                id = "2",
-                title = "Abbey Road",
-                subtitle = "The Beatles",
-                format = MediaFormat.VINYL,
-                year = 1969
-            ),
-            MediaItem(
-                id = "3",
-                title = "Blade Runner",
-                subtitle = "Ridley Scott",
-                format = MediaFormat.VHS,
-                year = 1982
-            ),
-            MediaItem(
-                id = "4",
-                title = "Alien",
-                subtitle = "Ridley Scott",
-                format = MediaFormat.VHS,
-                year = 1979
-            ),
-            MediaItem(
-                id = "5",
-                title = "Chrono Trigger",
-                subtitle = "Square",
-                format = MediaFormat.GAME,
-                year = 1995
-            ),
-            MediaItem(
-                id = "6",
-                title = "Metroid Prime",
-                subtitle = "Nintendo",
-                format = MediaFormat.GAME,
-                year = 2002
-            ),
-            MediaItem(
-                id = "7",
-                title = "Rumours",
-                subtitle = "Fleetwood Mac",
-                format = MediaFormat.CD,
-                year = 1977
-            ),
-            MediaItem(
-                id = "8",
-                title = "The Thing",
-                subtitle = "John Carpenter",
-                format = MediaFormat.DVD,
-                year = 1982
-            ),
-            MediaItem(
-                id = "9",
-                title = "Wish You Were Here",
-                subtitle = "Pink Floyd",
-                format = MediaFormat.CASSETTE,
-                year = 1975
-            ),
-            MediaItem(
-                id = "10",
-                title = "2001: A Space Odyssey",
-                subtitle = "Stanley Kubrick",
-                format = MediaFormat.BLURAY,
-                year = 1968
-            )
-        )
-    }
+    val collectionItems = FakeMediaData.collectionItems
 
     var searchText by remember {
         mutableStateOf(TextFieldValue(""))

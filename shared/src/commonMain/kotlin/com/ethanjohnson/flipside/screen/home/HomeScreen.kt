@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.MaterialTheme
@@ -21,75 +20,18 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.ethanjohnson.flipside.data.FakeMediaData
+import com.ethanjohnson.flipside.model.MediaItem
 import com.ethanjohnson.flipside.ui.components.CollectionStatCard
 import com.ethanjohnson.flipside.ui.components.MediaCard
 import com.ethanjohnson.flipside.ui.components.SectionHeader
-
-private data class DemoMediaItem(
-    val title: String,
-    val subtitle: String,
-    val format: String
-)
+import com.ethanjohnson.flipside.model.MediaFormat
 
 @Composable
 fun HomeScreen() {
-    val recentItems = listOf(
-        DemoMediaItem(
-            title = "The Dark Side of the Moon",
-            subtitle = "Pink Floyd • 1973",
-            format = "Vinyl"
-        ),
-        DemoMediaItem(
-            title = "Blade Runner",
-            subtitle = "1982",
-            format = "VHS"
-        ),
-        DemoMediaItem(
-            title = "Super Mario World",
-            subtitle = "1991",
-            format = "Game"
-        ),
-        DemoMediaItem(
-            title = "Abbey Road",
-            subtitle = "The Beatles • 1969",
-            format = "Vinyl"
-        ),
-        DemoMediaItem(
-            title = "The Thing",
-            subtitle = "1982",
-            format = "VHS"
-        )
-    )
-
-    val recommendations = listOf(
-        DemoMediaItem(
-            title = "Wish You Were Here",
-            subtitle = "Pink Floyd • 1975",
-            format = "Vinyl"
-        ),
-        DemoMediaItem(
-            title = "Alien",
-            subtitle = "1979",
-            format = "VHS"
-        ),
-        DemoMediaItem(
-            title = "Chrono Trigger",
-            subtitle = "1995",
-            format = "Game"
-        ),
-        DemoMediaItem(
-            title = "Rumours",
-            subtitle = "Fleetwood Mac • 1977",
-            format = "Vinyl"
-        ),
-        DemoMediaItem(
-            title = "Metroid Prime",
-            subtitle = "2002",
-            format = "Game"
-        )
-    )
+    val recentItems = FakeMediaData.recentlyAdded
+    val recommendationItems = FakeMediaData.recommendations
 
     BoxWithConstraints(
         modifier = Modifier.fillMaxSize()
@@ -102,122 +44,150 @@ fun HomeScreen() {
             16.dp
         }
 
-        val mobileCardWidth = 170.dp
-
         Box(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.TopCenter
         ) {
-            LazyColumn(
+            Column(
                 modifier = Modifier
                     .widthIn(max = 1200.dp)
-                    .fillMaxWidth()
-                    .padding(horizontal = horizontalPadding),
-                verticalArrangement = Arrangement.spacedBy(28.dp)
+                    .fillMaxSize()
+                    .padding(horizontal = horizontalPadding)
             ) {
-                item {
-                    Spacer(modifier = Modifier.height(18.dp))
+                Spacer(
+                    modifier = Modifier.height(20.dp)
+                )
 
-                    Column(
-                        verticalArrangement = Arrangement.spacedBy(6.dp)
-                    ) {
-                        Text(
-                            text = "FlipSide",
-                            style = MaterialTheme.typography.displaySmall,
-                            color = MaterialTheme.colorScheme.onBackground
-                        )
+                HomeHeader()
 
-                        Text(
-                            text = "Your collection, rediscovered.",
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                Spacer(
+                    modifier = Modifier.height(28.dp)
+                )
 
-                        Spacer(modifier = Modifier.height(4.dp))
+                CollectionStats(
+                    isWideLayout = isWideLayout
+                )
 
-                        Box(
-                            modifier = Modifier
-                                .width(56.dp)
-                                .height(4.dp)
-                                .background(
-                                    color = MaterialTheme.colorScheme.tertiary,
-                                    shape = MaterialTheme.shapes.extraSmall
-                                )
-                        )
-                    }
-                }
+                Spacer(
+                    modifier = Modifier.height(28.dp)
+                )
 
-                item {
-                    CollectionStats(
-                        wideLayout = isWideLayout
-                    )
-                }
+                MediaSection(
+                    title = "Recently Added",
+                    mediaItems = recentItems,
+                    isWideLayout = isWideLayout
+                )
 
-                item {
-                    MediaSection(
-                        title = "Recently Added",
-                        actionText = "See All",
-                        mediaItems = recentItems,
-                        wideLayout = isWideLayout,
-                        mobileCardWidth = mobileCardWidth
-                    )
-                }
+                Spacer(
+                    modifier = Modifier.height(28.dp)
+                )
 
-                item {
-                    MediaSection(
-                        title = "Picked For You",
-                        actionText = "Explore",
-                        mediaItems = recommendations,
-                        wideLayout = isWideLayout,
-                        mobileCardWidth = mobileCardWidth
-                    )
-                }
+                MediaSection(
+                    title = "Picked For You",
+                    mediaItems = recommendationItems,
+                    isWideLayout = isWideLayout
+                )
 
-                item {
-                    Spacer(modifier = Modifier.height(32.dp))
-                }
+                Spacer(
+                    modifier = Modifier.height(32.dp)
+                )
             }
         }
     }
 }
 
 @Composable
-private fun CollectionStats(
-    wideLayout: Boolean
-) {
-    Column(
-        verticalArrangement = Arrangement.spacedBy(14.dp)
-    ) {
-        SectionHeader(
-            title = "Your Collection"
+private fun HomeHeader() {
+    Column {
+        Text(
+            text = "FlipSide",
+            style = MaterialTheme.typography.displayMedium,
+            color = MaterialTheme.colorScheme.onBackground
         )
 
-        if (wideLayout) {
+        Spacer(
+            modifier = Modifier.height(4.dp)
+        )
+
+        Text(
+            text = "Your collection, rediscovered.",
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+
+        Spacer(
+            modifier = Modifier.height(14.dp)
+        )
+
+        Box(
+            modifier = Modifier
+                .width(56.dp)
+                .height(4.dp)
+                .background(
+                    color = MaterialTheme.colorScheme.tertiary,
+                    shape = MaterialTheme.shapes.small
+                )
+        )
+    }
+}
+
+@Composable
+private fun CollectionStats(
+    isWideLayout: Boolean
+) {
+    val collectionItems = FakeMediaData.collectionItems
+
+    val vinylCount = collectionItems.count {
+        it.format == MediaFormat.VINYL
+    }
+
+    val cdCount = collectionItems.count {
+        it.format == MediaFormat.CD
+    }
+
+    val vhsCount = collectionItems.count {
+        it.format == MediaFormat.VHS
+    }
+
+    val gameCount = collectionItems.count {
+        it.format == MediaFormat.GAME
+    }
+
+    Column(
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Text(
+            text = "Your Collection",
+            style = MaterialTheme.typography.headlineSmall,
+            color = MaterialTheme.colorScheme.onBackground
+        )
+
+        if (isWideLayout) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                horizontalArrangement = Arrangement.spacedBy(14.dp)
             ) {
                 CollectionStatCard(
                     label = "Vinyl",
-                    count = 42,
+                    count = vinylCount,
                     modifier = Modifier.weight(1f)
                 )
 
                 CollectionStatCard(
                     label = "CDs",
-                    count = 68,
+                    count = cdCount,
                     modifier = Modifier.weight(1f)
                 )
 
                 CollectionStatCard(
                     label = "VHS",
-                    count = 17,
+                    count = vhsCount,
                     modifier = Modifier.weight(1f)
                 )
 
                 CollectionStatCard(
                     label = "Games",
-                    count = 31,
+                    count = gameCount,
                     modifier = Modifier.weight(1f)
                 )
             }
@@ -231,13 +201,13 @@ private fun CollectionStats(
                 ) {
                     CollectionStatCard(
                         label = "Vinyl",
-                        count = 42,
+                        count = vinylCount,
                         modifier = Modifier.weight(1f)
                     )
 
                     CollectionStatCard(
                         label = "CDs",
-                        count = 68,
+                        count = cdCount,
                         modifier = Modifier.weight(1f)
                     )
                 }
@@ -248,13 +218,13 @@ private fun CollectionStats(
                 ) {
                     CollectionStatCard(
                         label = "VHS",
-                        count = 17,
+                        count = vhsCount,
                         modifier = Modifier.weight(1f)
                     )
 
                     CollectionStatCard(
                         label = "Games",
-                        count = 31,
+                        count = gameCount,
                         modifier = Modifier.weight(1f)
                     )
                 }
@@ -266,27 +236,23 @@ private fun CollectionStats(
 @Composable
 private fun MediaSection(
     title: String,
-    actionText: String,
-    mediaItems: List<DemoMediaItem>,
-    wideLayout: Boolean,
-    mobileCardWidth: Dp
+    mediaItems: List<MediaItem>,
+    isWideLayout: Boolean
 ) {
     Column(
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         SectionHeader(
-            title = title,
-            actionText = actionText
+            title = title
         )
 
-        if (wideLayout) {
+        if (isWideLayout) {
             DesktopMediaRow(
                 mediaItems = mediaItems
             )
         } else {
             MobileMediaRow(
-                mediaItems = mediaItems,
-                cardWidth = mobileCardWidth
+                mediaItems = mediaItems
             )
         }
     }
@@ -294,7 +260,7 @@ private fun MediaSection(
 
 @Composable
 private fun DesktopMediaRow(
-    mediaItems: List<DemoMediaItem>
+    mediaItems: List<MediaItem>
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -303,8 +269,8 @@ private fun DesktopMediaRow(
         mediaItems.take(5).forEach { item ->
             MediaCard(
                 title = item.title,
-                subtitle = item.subtitle,
-                format = item.format,
+                subtitle = mediaSubtitle(item),
+                format = item.format.displayName,
                 modifier = Modifier.weight(1f)
             )
         }
@@ -313,19 +279,36 @@ private fun DesktopMediaRow(
 
 @Composable
 private fun MobileMediaRow(
-    mediaItems: List<DemoMediaItem>,
-    cardWidth: Dp
+    mediaItems: List<MediaItem>
 ) {
     LazyRow(
         horizontalArrangement = Arrangement.spacedBy(14.dp)
     ) {
-        items(mediaItems) { item ->
+        items(
+            items = mediaItems,
+            key = { item ->
+                item.id
+            }
+        ) { item ->
             MediaCard(
                 title = item.title,
-                subtitle = item.subtitle,
-                format = item.format,
-                modifier = Modifier.width(cardWidth)
+                subtitle = mediaSubtitle(item),
+                format = item.format.displayName,
+                modifier = Modifier.width(170.dp)
             )
+        }
+    }
+}
+
+private fun mediaSubtitle(
+    item: MediaItem
+): String {
+    return buildString {
+        append(item.subtitle)
+
+        item.year?.let { year ->
+            append(" • ")
+            append(year)
         }
     }
 }
