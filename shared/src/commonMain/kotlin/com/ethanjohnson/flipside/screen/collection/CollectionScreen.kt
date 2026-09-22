@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -67,7 +66,6 @@ fun CollectionScreen(
     collectionItems: List<MediaItem>,
     onMediaClick: (MediaItem) -> Unit = {}
 ) {
-
     var searchText by remember {
         mutableStateOf(TextFieldValue(""))
     }
@@ -89,28 +87,23 @@ fun CollectionScreen(
     }
 
     val filters = remember {
-        listOf(
-            CollectionFilter.All,
-            CollectionFilter.Format(MediaFormat.VINYL),
-            CollectionFilter.Format(MediaFormat.CD),
-            CollectionFilter.Format(MediaFormat.CASSETTE),
-            CollectionFilter.Format(MediaFormat.VHS),
-            CollectionFilter.Format(MediaFormat.DVD),
-            CollectionFilter.Format(MediaFormat.BLURAY),
-            CollectionFilter.Format(MediaFormat.GAME),
-            CollectionFilter.Format(MediaFormat.BOOK)
-        )
+        listOf(CollectionFilter.All) +
+                MediaFormat.entries.map {
+                    CollectionFilter.Format(it)
+                }
     }
 
     val filteredItems = collectionItems.filter { item ->
+        val query = searchText.text.trim()
+
         val matchesSearch =
-            searchText.text.isBlank() ||
+            query.isBlank() ||
                     item.title.contains(
-                        searchText.text,
+                        query,
                         ignoreCase = true
                     ) ||
                     item.subtitle.contains(
-                        searchText.text,
+                        query,
                         ignoreCase = true
                     )
 
@@ -125,56 +118,57 @@ fun CollectionScreen(
         matchesSearch && matchesFilter
     }
 
-    val sortedItems = when (selectedSort) {
-        CollectionSort.RECENTLY_ADDED -> {
-            filteredItems
-        }
+    val sortedItems =
+        when (selectedSort) {
+            CollectionSort.RECENTLY_ADDED ->
+                filteredItems.sortedByDescending {
+                    it.dateAdded ?: Long.MIN_VALUE
+                }
 
-        CollectionSort.OLDEST_ADDED -> {
-            filteredItems.reversed()
-        }
+            CollectionSort.OLDEST_ADDED ->
+                filteredItems.sortedBy {
+                    it.dateAdded ?: Long.MAX_VALUE
+                }
 
-        CollectionSort.TITLE_ASCENDING -> {
-            filteredItems.sortedBy {
-                it.title.lowercase()
-            }
-        }
+            CollectionSort.TITLE_ASCENDING ->
+                filteredItems.sortedBy {
+                    it.title.trim().lowercase()
+                }
 
-        CollectionSort.TITLE_DESCENDING -> {
-            filteredItems.sortedByDescending {
-                it.title.lowercase()
-            }
-        }
+            CollectionSort.TITLE_DESCENDING ->
+                filteredItems.sortedByDescending {
+                    it.title.trim().lowercase()
+                }
 
-        CollectionSort.YEAR_NEWEST -> {
-            filteredItems.sortedByDescending {
-                it.year ?: Int.MIN_VALUE
-            }
-        }
+            CollectionSort.YEAR_NEWEST ->
+                filteredItems.sortedByDescending {
+                    it.year ?: Int.MIN_VALUE
+                }
 
-        CollectionSort.YEAR_OLDEST -> {
-            filteredItems.sortedBy {
-                it.year ?: Int.MAX_VALUE
-            }
+            CollectionSort.YEAR_OLDEST ->
+                filteredItems.sortedBy {
+                    it.year ?: Int.MAX_VALUE
+                }
         }
-    }
 
     BoxWithConstraints(
         modifier = Modifier.fillMaxSize()
     ) {
         val isWideLayout = maxWidth >= 900.dp
 
-        val horizontalPadding = if (isWideLayout) {
-            32.dp
-        } else {
-            16.dp
-        }
+        val horizontalPadding =
+            if (isWideLayout) {
+                32.dp
+            } else {
+                16.dp
+            }
 
-        val minCardWidth = if (isWideLayout) {
-            190.dp
-        } else {
-            150.dp
-        }
+        val minCardWidth =
+            if (isWideLayout) {
+                190.dp
+            } else {
+                150.dp
+            }
 
         Box(
             modifier = Modifier.fillMaxSize(),
