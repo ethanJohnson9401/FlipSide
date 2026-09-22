@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlin.time.Clock
+import kotlin.uuid.Uuid
 
 class MediaRepository(
     val database: FlipSideDatabase
@@ -319,14 +320,9 @@ class MediaRepository(
                     it.toMediaItem()
                 }
     }
-    private fun generateId():
-            String {
 
-        return "user-media-${
-            Clock.System
-                .now()
-                .toEpochMilliseconds()
-        }"
+    private fun generateId(): String {
+        return "user-media-${Uuid.random()}"
     }
 
     private fun String?.nullIfBlank():

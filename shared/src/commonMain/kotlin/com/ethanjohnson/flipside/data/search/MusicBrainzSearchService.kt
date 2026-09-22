@@ -4,25 +4,52 @@ import com.ethanjohnson.flipside.model.MediaFormat
 import com.ethanjohnson.flipside.model.MediaSearchResult
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
+import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.request.parameter
 import io.ktor.http.HttpHeaders
 import io.ktor.serialization.kotlinx.json.json
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import kotlin.time.Clock
 
 class MusicBrainzSearchService(
     private val client: HttpClient = createHttpClient()
 ) : MediaSearchService {
+
+    private val requestMutex = Mutex()
+    private var lastRequestAt = 0L
 
     override suspend fun search(
         query: String
     ): List<MediaSearchResult> {
         if (query.isBlank()) {
             return emptyList()
+        }
+
+        requestMutex.withLock {
+            val now =
+                Clock.System
+                    .now()
+                    .toEpochMilliseconds()
+
+            val waitTime =
+                1100L - (now - lastRequestAt)
+
+            if (waitTime > 0) {
+                delay(waitTime)
+            }
+
+            lastRequestAt =
+                Clock.System
+                    .now()
+                    .toEpochMilliseconds()
         }
 
         val response =
@@ -57,7 +84,9 @@ class MusicBrainzSearchService(
             .map { release ->
                 release.toMediaSearchResult()
             }
-            .distinctBy { it.externalId }
+            .distinctBy {
+                it.externalId
+            }
     }
 
     companion object {
@@ -70,6 +99,12 @@ private fun createHttpClient():
         HttpClient {
 
     return HttpClient {
+        install(HttpTimeout) {
+            requestTimeoutMillis = 15_000
+            connectTimeoutMillis = 10_000
+            socketTimeoutMillis = 15_000
+        }
+
         install(
             ContentNegotiation
         ) {
