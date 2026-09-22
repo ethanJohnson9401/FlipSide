@@ -1,5 +1,6 @@
 package com.ethanjohnson.flipside.data.recommendation
 
+import com.ethanjohnson.flipside.model.MediaFormat
 import com.ethanjohnson.flipside.model.MediaItem
 import com.ethanjohnson.flipside.model.MediaSearchResult
 import kotlin.math.abs
@@ -22,7 +23,8 @@ class LocalMediaRecommendationService :
                 .map {
                     mediaKey(
                         title = it.title,
-                        subtitle = it.subtitle
+                        subtitle = it.subtitle,
+                        format = it.format
                     )
                 }
                 .toSet()
@@ -32,7 +34,8 @@ class LocalMediaRecommendationService :
                 .map {
                     mediaKey(
                         title = it.title,
-                        subtitle = it.subtitle
+                        subtitle = it.subtitle,
+                        format = it.format
                     )
                 }
                 .toSet()
@@ -41,7 +44,8 @@ class LocalMediaRecommendationService :
             .filter { candidate ->
                 mediaKey(
                     title = candidate.title,
-                    subtitle = candidate.subtitle
+                    subtitle = candidate.subtitle,
+                    format = candidate.format
                 ) !in ownedKeys
             }
             .map { candidate ->
@@ -63,7 +67,8 @@ class LocalMediaRecommendationService :
             .distinctBy {
                 mediaKey(
                     title = it.title,
-                    subtitle = it.subtitle
+                    subtitle = it.subtitle,
+                    format = it.format
                 )
             }
             .take(10)
@@ -119,7 +124,8 @@ class LocalMediaRecommendationService :
         val candidateKey =
             mediaKey(
                 title = candidate.title,
-                subtitle = candidate.subtitle
+                subtitle = candidate.subtitle,
+                format = candidate.format
             )
 
         if (
@@ -133,7 +139,8 @@ class LocalMediaRecommendationService :
 
     private fun mediaKey(
         title: String,
-        subtitle: String
+        subtitle: String,
+        format: MediaFormat?
     ): String {
         return buildString {
             append(
@@ -144,6 +151,14 @@ class LocalMediaRecommendationService :
 
             append(
                 normalize(subtitle)
+            )
+
+            append("::")
+
+            append(
+                format
+                    ?.databaseValue
+                    .orEmpty()
             )
         }
     }

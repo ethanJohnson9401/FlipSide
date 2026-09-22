@@ -6,6 +6,7 @@ import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.client.plugins.expectSuccess
 import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.request.parameter
@@ -25,6 +26,10 @@ class MusicBrainzSearchService(
 
     private val requestMutex = Mutex()
     private var lastRequestAt = 0L
+
+    fun close() {
+        client.close()
+    }
 
     override suspend fun search(
         query: String
@@ -56,6 +61,8 @@ class MusicBrainzSearchService(
             client.get(
                 "https://musicbrainz.org/ws/2/release/"
             ) {
+                expectSuccess = true
+
                 parameter(
                     "query",
                     query.trim()

@@ -1,5 +1,6 @@
 package com.ethanjohnson.flipside.screen.add
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -14,7 +15,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.background
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -159,6 +159,10 @@ fun AddScreen(
         mutableStateOf(false)
     }
 
+    var searchError by remember {
+        mutableStateOf<String?>(null)
+    }
+
     val coroutineScope =
         rememberCoroutineScope()
 
@@ -177,6 +181,7 @@ fun AddScreen(
 
         searchQuery = ""
         searchResults = emptyList()
+        searchError = null
     }
 
     fun populateFromSearchResult(
@@ -200,7 +205,8 @@ fun AddScreen(
         coverArtUrl =
             result.coverArtUrl
 
-        selectedFormat = result.format
+        selectedFormat =
+            result.format
 
         addMode =
             AddMode.MANUAL
@@ -330,12 +336,24 @@ fun AddScreen(
                                     isSearching =
                                         true
 
+                                    searchError = null
+
                                     try {
                                         searchResults =
                                             searchRepository
                                                 .search(
                                                     searchQuery
                                                 )
+                                    } catch (exception: Exception) {
+                                        searchResults =
+                                            emptyList()
+
+                                        searchError =
+                                            exception.message
+                                                ?.takeIf {
+                                                    it.isNotBlank()
+                                                }
+                                                ?: "Search failed. Please try again."
                                     } finally {
                                         isSearching =
                                             false
@@ -351,6 +369,16 @@ fun AddScreen(
                                 }
                             )
                         }
+                    }
+
+                    searchError?.let { error ->
+                        Text(
+                            text = error,
+                            color =
+                                MaterialTheme
+                                    .colorScheme
+                                    .error
+                        )
                     }
 
                     searchResults.forEach {
@@ -596,7 +624,8 @@ fun AddScreen(
                                     selectedFormat != null,
                         onClick = {
                             val format =
-                                selectedFormat ?: return@Button
+                                selectedFormat
+                                    ?: return@Button
 
                             if (
                                 destination ==

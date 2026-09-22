@@ -6,7 +6,7 @@ plugins {
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.sqldelight)
-    alias {libs.plugins.kotlinSerialization}
+    alias(libs.plugins.kotlinSerialization)
 }
 
 kotlin {
@@ -19,66 +19,141 @@ kotlin {
             isStatic = true
         }
     }
-    
+
     jvm()
-    
+
     android {
-       namespace = "com.ethanjohnson.flipside.shared"
-       compileSdk = libs.versions.android.compileSdk.get().toInt()
-       minSdk = libs.versions.android.minSdk.get().toInt()
-    
-       compilerOptions {
-           jvmTarget = JvmTarget.JVM_11
-       }
-       androidResources {
-           enable = true
-       }
-       withHostTest {
-           isIncludeAndroidResources = true
-       }
-       withDeviceTestBuilder {
-           sourceSetTreeName = "test"
-       }.configure {
-           instrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-       }
+        namespace = "com.ethanjohnson.flipside.shared"
+        compileSdk =
+            libs.versions.android.compileSdk
+                .get()
+                .toInt()
+        minSdk =
+            libs.versions.android.minSdk
+                .get()
+                .toInt()
+
+        compilerOptions {
+            jvmTarget = JvmTarget.JVM_11
+        }
+
+        androidResources {
+            enable = true
+        }
+
+        withHostTest {
+            isIncludeAndroidResources = true
+        }
+
+        withDeviceTestBuilder {
+            sourceSetTreeName = "test"
+        }.configure {
+            instrumentationRunner =
+                "androidx.test.runner.AndroidJUnitRunner"
+        }
     }
 
     sourceSets {
         androidMain.dependencies {
-            implementation(libs.compose.uiToolingPreview)
-            implementation(libs.compose.uiTooling)
+            implementation(
+                libs.compose.uiToolingPreview
+            )
 
-            implementation(libs.sqldelight.android.driver)
+            implementation(
+                libs.compose.uiTooling
+            )
+
+            implementation(
+                libs.sqldelight.android.driver
+            )
         }
 
         commonMain.dependencies {
-            implementation(libs.compose.runtime)
-            implementation(libs.compose.foundation)
-            implementation(libs.compose.material3)
-            implementation(libs.compose.ui)
-            implementation(libs.compose.components.resources)
-            implementation(libs.compose.uiToolingPreview)
-            implementation(libs.androidx.lifecycle.viewmodelCompose)
-            implementation(libs.androidx.lifecycle.runtimeCompose)
-            implementation(libs.kotlinx.coroutines.core)
-            implementation(libs.ktor.client.core)
-            implementation(libs.ktor.client.engine.defaults)
-            implementation(libs.ktor.client.content.negotiation)
-            implementation(libs.ktor.serialization.kotlinx.json)
-            implementation(libs.coil.compose)
-            implementation(libs.coil.network.ktor3)
+            implementation(
+                libs.compose.runtime
+            )
+
+            implementation(
+                libs.compose.foundation
+            )
+
+            implementation(
+                libs.compose.material3
+            )
+
+            implementation(
+                libs.compose.ui
+            )
+
+            implementation(
+                libs.compose.components.resources
+            )
+
+            implementation(
+                libs.compose.uiToolingPreview
+            )
+
+            implementation(
+                libs.androidx.lifecycle.viewmodelCompose
+            )
+
+            implementation(
+                libs.androidx.lifecycle.runtimeCompose
+            )
+
+            implementation(
+                libs.kotlinx.coroutines.core
+            )
+
+            implementation(
+                libs.ktor.client.core
+            )
+
+            implementation(
+                libs.ktor.client.engine.defaults
+            )
+
+            implementation(
+                libs.ktor.client.content.negotiation
+            )
+
+            implementation(
+                libs.ktor.serialization.kotlinx.json
+            )
+
+            implementation(
+                libs.coil.compose
+            )
+
+            implementation(
+                libs.coil.network.ktor3
+            )
         }
 
         iosMain.dependencies {
-            implementation(libs.sqldelight.native.driver)
+            implementation(
+                libs.sqldelight.native.driver
+            )
         }
 
         jvmMain.dependencies {
-            implementation(libs.sqldelight.sqlite.driver)
+            implementation(
+                libs.sqldelight.sqlite.driver
+            )
         }
 
         commonTest.dependencies {
-            implementation(libs.kotlin.test)
+            implementation(
+                libs.kotlin.test
+            )
+
+            implementation(
+                libs.kotlinx.coroutines.test
+            )
+
+            implementation(
+                libs.ktor.client.mock
+            )
         }
     }
 }
@@ -86,11 +161,15 @@ kotlin {
 sqldelight {
     databases {
         create("FlipSideDatabase") {
-            packageName.set("com.ethanjohnson.flipside.db")
+            packageName.set(
+                "com.ethanjohnson.flipside.db"
+            )
         }
     }
 }
 
 dependencies {
-    androidRuntimeClasspath(libs.compose.uiTooling)
+    androidRuntimeClasspath(
+        libs.compose.uiTooling
+    )
 }
