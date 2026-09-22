@@ -125,6 +125,81 @@ class LocalMediaRecommendationServiceTest {
         }
 
     @Test
+    fun excludesItemAlreadyInWishlist() =
+        runTest {
+            val collection =
+                listOf(
+                    mediaItem(
+                        title = "Kind of Blue",
+                        subtitle = "Miles Davis",
+                        format = MediaFormat.VINYL
+                    )
+                )
+
+            val wishlist =
+                listOf(
+                    mediaItem(
+                        title = "Bitches Brew",
+                        subtitle = "Miles Davis",
+                        format = MediaFormat.CD
+                    )
+                )
+
+            val candidates =
+                listOf(
+                    searchResult(
+                        title = "Bitches Brew",
+                        subtitle = "Miles Davis",
+                        format = MediaFormat.CD
+                    )
+                )
+
+            val recommendations =
+                service.recommendations(
+                    collection = collection,
+                    wishlist = wishlist,
+                    candidates = candidates
+                )
+
+            assertTrue(
+                recommendations.isEmpty()
+            )
+        }
+
+    @Test
+    fun excludesCandidateWithoutPhysicalFormat() =
+        runTest {
+            val collection =
+                listOf(
+                    mediaItem(
+                        title = "Kind of Blue",
+                        subtitle = "Miles Davis",
+                        format = MediaFormat.VINYL
+                    )
+                )
+
+            val candidates =
+                listOf(
+                    searchResult(
+                        title = "Bitches Brew",
+                        subtitle = "Miles Davis",
+                        format = null
+                    )
+                )
+
+            val recommendations =
+                service.recommendations(
+                    collection = collection,
+                    wishlist = emptyList(),
+                    candidates = candidates
+                )
+
+            assertTrue(
+                recommendations.isEmpty()
+            )
+        }
+
+    @Test
     fun returnsEmptyWhenCollectionIsEmpty() =
         runTest {
             val recommendations =
@@ -163,7 +238,7 @@ class LocalMediaRecommendationServiceTest {
     private fun searchResult(
         title: String,
         subtitle: String,
-        format: MediaFormat
+        format: MediaFormat?
     ): MediaSearchResult {
         return MediaSearchResult(
             externalId = "release-$title-$format",
