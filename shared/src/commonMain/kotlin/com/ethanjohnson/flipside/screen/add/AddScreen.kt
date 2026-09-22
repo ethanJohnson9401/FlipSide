@@ -106,7 +106,7 @@ fun AddScreen(
     }
 
     var selectedFormat by remember {
-        mutableStateOf(MediaFormat.VINYL)
+        mutableStateOf<MediaFormat?>(MediaFormat.VINYL)
     }
 
     var title by remember {
@@ -200,9 +200,7 @@ fun AddScreen(
         coverArtUrl =
             result.coverArtUrl
 
-        result.format?.let {
-            selectedFormat = it
-        }
+        selectedFormat = result.format
 
         addMode =
             AddMode.MANUAL
@@ -594,8 +592,12 @@ fun AddScreen(
 
                     Button(
                         enabled =
-                            title.isNotBlank(),
+                            title.isNotBlank() &&
+                                    selectedFormat != null,
                         onClick = {
+                            val format =
+                                selectedFormat ?: return@Button
+
                             if (
                                 destination ==
                                 AddDestination.COLLECTION
@@ -603,7 +605,7 @@ fun AddScreen(
                                 onAddToCollection(
                                     title.trim(),
                                     subtitle.trim(),
-                                    selectedFormat,
+                                    format,
                                     year.toIntOrNull(),
                                     edition
                                         .trim()
@@ -624,7 +626,7 @@ fun AddScreen(
                                 onAddToWishlist(
                                     title.trim(),
                                     subtitle.trim(),
-                                    selectedFormat,
+                                    format,
                                     year.toIntOrNull(),
                                     edition
                                         .trim()

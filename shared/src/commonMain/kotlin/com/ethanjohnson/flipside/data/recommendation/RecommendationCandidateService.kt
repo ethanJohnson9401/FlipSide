@@ -1,10 +1,9 @@
 package com.ethanjohnson.flipside.data.recommendation
 
 import com.ethanjohnson.flipside.data.search.MediaSearchRepository
+import com.ethanjohnson.flipside.model.MediaFormat
 import com.ethanjohnson.flipside.model.MediaItem
 import com.ethanjohnson.flipside.model.MediaSearchResult
-import kotlinx.coroutines.delay
-import com.ethanjohnson.flipside.model.MediaFormat
 
 class RecommendationCandidateService(
     private val searchRepository: MediaSearchRepository
@@ -12,12 +11,6 @@ class RecommendationCandidateService(
 
     companion object {
         private const val MAX_CREATORS = 3
-
-        /*
-         * MusicBrainz asks clients to stay around
-         * one request per second.
-         */
-        private const val SEARCH_DELAY_MS = 1100L
     }
 
     suspend fun discoverCandidates(
@@ -42,9 +35,7 @@ class RecommendationCandidateService(
         val discovered =
             mutableListOf<MediaSearchResult>()
 
-        creators.forEachIndexed {
-                index,
-                creator ->
+        creators.forEach { creator ->
 
             val query =
                 buildArtistQuery(
@@ -65,18 +56,6 @@ class RecommendationCandidateService(
                     "FlipSide Recommendations: " +
                             "Could not load candidates for " +
                             "'$creator': ${exception.message}"
-                )
-            }
-
-            /*
-             * Don't delay after the final query.
-             */
-            if (
-                index <
-                creators.lastIndex
-            ) {
-                delay(
-                    SEARCH_DELAY_MS
                 )
             }
         }

@@ -37,7 +37,7 @@ SELECT COALESCE(MAX(added_order), 0)
 FROM media_item;
 
 insertItem:
-INSERT OR REPLACE INTO media_item(
+INSERT INTO media_item(
     id,
     title,
     subtitle,
