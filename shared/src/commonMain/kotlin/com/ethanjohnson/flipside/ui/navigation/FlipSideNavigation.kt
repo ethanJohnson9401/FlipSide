@@ -7,13 +7,13 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.ethanjohnson.flipside.data.MediaRepository
 import com.ethanjohnson.flipside.data.recommendation.LocalMediaRecommendationService
@@ -30,6 +30,7 @@ import com.ethanjohnson.flipside.screen.edit.EditMediaScreen
 import com.ethanjohnson.flipside.screen.home.HomeScreen
 import com.ethanjohnson.flipside.screen.recommendation.RecommendationDetailScreen
 import com.ethanjohnson.flipside.screen.wishlist.WishlistScreen
+import com.ethanjohnson.flipside.screen.discover.DiscoverScreen
 
 @Composable
 fun FlipSideNavigation(
@@ -46,14 +47,29 @@ fun FlipSideNavigation(
         .wishlistItems
         .collectAsState()
 
+    val musicBrainzSearchService =
+        remember {
+            MusicBrainzSearchService()
+        }
+
+    DisposableEffect(
+        musicBrainzSearchService
+    ) {
+        onDispose {
+            musicBrainzSearchService.close()
+        }
+    }
+
     val searchRepository:
             MediaSearchRepository =
-        remember {
+        remember(
+            musicBrainzSearchService
+        ) {
             CachedMediaSearchRepository(
                 database =
                     mediaRepository.database,
                 searchService =
-                    MusicBrainzSearchService()
+                    musicBrainzSearchService
             )
         }
 
@@ -102,7 +118,9 @@ fun FlipSideNavigation(
     ) {
         if (
             currentDestination !=
-            FlipSideDestination.HOME
+            FlipSideDestination.HOME &&
+            currentDestination !=
+            FlipSideDestination.DISCOVER
         ) {
             value =
                 emptyList()
@@ -602,22 +620,13 @@ private fun FlipSideContent(
             }
 
             FlipSideDestination.DISCOVER -> {
-                DiscoverPlaceholder()
+                DiscoverScreen(
+                    recommendations =
+                        recommendationItems,
+                    onRecommendationClick =
+                        onRecommendationClick
+                )
             }
         }
-    }
-}
-
-@Composable
-private fun DiscoverPlaceholder() {
-    Box(
-        modifier =
-            Modifier.fillMaxSize(),
-        contentAlignment =
-            Alignment.Center
-    ) {
-        androidx.compose.material3.Text(
-            text = "Discover"
-        )
     }
 }
