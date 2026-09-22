@@ -341,22 +341,14 @@ fun AddScreen(
                                     try {
                                         searchResults =
                                             searchRepository
-                                                .search(
-                                                    searchQuery
-                                                )
-                                    } catch (exception: Exception) {
-                                        searchResults =
-                                            emptyList()
+                                                .search(searchQuery)
+                                    } catch (_: Exception) {
+                                        searchResults = emptyList()
 
                                         searchError =
-                                            exception.message
-                                                ?.takeIf {
-                                                    it.isNotBlank()
-                                                }
-                                                ?: "Search failed. Please try again."
+                                            "Search is temporarily unavailable. Please try again."
                                     } finally {
-                                        isSearching =
-                                            false
+                                        isSearching = false
                                     }
                                 }
                             }

@@ -13,46 +13,46 @@ class LocalMediaRecommendationService :
         wishlist: List<MediaItem>,
         candidates: List<MediaSearchResult>
     ): List<MediaSearchResult> {
-
         if (collection.isEmpty()) {
             return emptyList()
         }
 
-        val ownedKeys =
-            collection
-                .map {
-                    mediaKey(
-                        title = it.title,
-                        subtitle = it.subtitle,
-                        format = it.format
-                    )
-                }
-                .toSet()
+        val ownedKeys = collection
+            .map {
+                mediaKey(
+                    title = it.title,
+                    subtitle = it.subtitle,
+                    format = it.format
+                )
+            }
+            .toSet()
 
-        val wishlistKeys =
-            wishlist
-                .map {
-                    mediaKey(
-                        title = it.title,
-                        subtitle = it.subtitle,
-                        format = it.format
-                    )
-                }
-                .toSet()
+        val wishlistKeys = wishlist
+            .map {
+                mediaKey(
+                    title = it.title,
+                    subtitle = it.subtitle,
+                    format = it.format
+                )
+            }
+            .toSet()
 
         return candidates
             .filter { candidate ->
-                mediaKey(
+                val candidateKey = mediaKey(
                     title = candidate.title,
                     subtitle = candidate.subtitle,
                     format = candidate.format
-                ) !in ownedKeys
+                )
+
+                candidate.format != null &&
+                        candidateKey !in ownedKeys &&
+                        candidateKey !in wishlistKeys
             }
             .map { candidate ->
                 candidate to scoreCandidate(
                     candidate = candidate,
-                    collection = collection,
-                    wishlistKeys = wishlistKeys
+                    collection = collection
                 )
             }
             .filter {
@@ -76,17 +76,13 @@ class LocalMediaRecommendationService :
 
     private fun scoreCandidate(
         candidate: MediaSearchResult,
-        collection: List<MediaItem>,
-        wishlistKeys: Set<String>
+        collection: List<MediaItem>
     ): Int {
         var score = 0
-
-        val candidateArtist =
-            normalize(candidate.subtitle)
+        val candidateArtist = normalize(candidate.subtitle)
 
         collection.forEach { owned ->
-            val ownedArtist =
-                normalize(owned.subtitle)
+            val ownedArtist = normalize(owned.subtitle)
 
             if (
                 candidateArtist.isNotBlank() &&
@@ -106,11 +102,9 @@ class LocalMediaRecommendationService :
                 candidate.year != null &&
                 owned.year != null
             ) {
-                val difference =
-                    abs(
-                        candidate.year -
-                                owned.year
-                    )
+                val difference = abs(
+                    candidate.year - owned.year
+                )
 
                 score += when {
                     difference <= 2 -> 15
@@ -119,19 +113,6 @@ class LocalMediaRecommendationService :
                     else -> 0
                 }
             }
-        }
-
-        val candidateKey =
-            mediaKey(
-                title = candidate.title,
-                subtitle = candidate.subtitle,
-                format = candidate.format
-            )
-
-        if (
-            candidateKey in wishlistKeys
-        ) {
-            score -= 50
         }
 
         return score
@@ -143,31 +124,15 @@ class LocalMediaRecommendationService :
         format: MediaFormat?
     ): String {
         return buildString {
-            append(
-                normalize(title)
-            )
-
+            append(normalize(title))
             append("::")
-
-            append(
-                normalize(subtitle)
-            )
-
+            append(normalize(subtitle))
             append("::")
-
-            append(
-                format
-                    ?.databaseValue
-                    .orEmpty()
-            )
+            append(format?.databaseValue.orEmpty())
         }
     }
 
-    private fun normalize(
-        value: String
-    ): String {
-        return value
-            .trim()
-            .lowercase()
+    private fun normalize(value: String): String {
+        return value.trim().lowercase()
     }
 }
